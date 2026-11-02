@@ -2,7 +2,7 @@
   "skill": "rotless-skill-refiner",
   "verified": {
     "date": "2026-11-02",
-    "note": "built 2026-11-02 with rotless-skill-creator; notes.py selftest passes"
+    "note": "reviewed skill-up e4a41d7: codex transcript fix in their runner, nothing to borrow"
   },
   "deps": [
     {

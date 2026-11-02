@@ -2,7 +2,7 @@
   "skill": "rotless-skill-creator",
   "verified": {
     "date": "2026-11-02",
-    "note": "codex-cli 0.166.0 installed; harness probe passes (loads project skills headlessly); claude 2.1.316 probe passes"
+    "note": "reviewed skill-up e4a41d7: codex transcript fix in their runner, nothing to borrow"
   },
   "deps": [
     {

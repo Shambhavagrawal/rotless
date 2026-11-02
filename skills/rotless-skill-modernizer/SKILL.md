@@ -1,6 +1,6 @@
 ---
 name: rotless-skill-modernizer
-description: Keep the skills YOU author true to the outside world they describe, on any agent. Writes a keeper.json for each skill (every CLI, API, MCP server, repo, doc and limit it relies on); `check` reports drift and text the manifest doesn't cover, with the line to fix; `fix` repairs the skill; `refresh` re-runs its prior art. Part of rotless - new skills start in rotless-skill-creator, lessons from real use go through rotless-skill-refiner. Use when the user asks "is my skill still accurate / up to date", "check my skills", "what broke in my skill", after upgrading a tool a skill depends on, or when editing a skill they own. Never for skills written by others.
+description: Keep the skills YOU author true to the outside world they describe, on any agent. Writes a keeper.json for each skill (every CLI, API, MCP server, repo, doc and limit it relies on); `check` reports drift and text the manifest doesn't cover, with the line to fix, plus any open field notes; `fix` repairs the skill; `refresh` re-runs its prior art. Part of rotless - new skills start in rotless-skill-creator; a skill that misbehaved in use, or should be optimized, goes to rotless-skill-refiner. Use when the user asks "check my skills", "is my skill still accurate / up to date", "I upgraded X, did anything break", after a tool a skill depends on ships a new version, or when editing a skill they own. Never for skills written by others.
 ---
 
 # rotless-skill-modernizer
@@ -103,7 +103,7 @@ The **Not tracked** section must come back empty.
 - `python "$K" ack <skill> [ID…] --note "…"`: accepts new upstream values (a re-verified CLI version, a re-read doc page) and stamps `verified`.
 - `python "$K" init <skill>`: drafts a manifest for an existing skill (fallback when it wasn't built through `new`). Borrowed files written as backticked paths in prior-art.md's "take" column become each repo's `files`.
 - `python "$K" prior-art-diff <skill> <new prior-art file>`: compares a refreshed prior-art file with the current one (used by `refresh`).
-- `list` shows your skills and their last result. `status` prints one offline line. When about to rely on one of your skills whose status is stale, say so and offer a check; don't run it unasked.
+- `list` shows your skills, their last result and open field notes. `status` prints one offline line. When about to rely on one of your skills whose status is stale, say so and offer a check; don't run it unasked.
 
 **Statuses:**
 - **FAIL:** something the skill relies on is gone or broken.
@@ -144,4 +144,4 @@ Claim checks: `{"gh": <api path>, "jsonPath", "equals"|"min"}`, `{"http": url, "
 - Don't publish digests, prior-art files or the registry anywhere without asking.
 
 ## Field notes
-If a step here fails, the user corrects you, you work around an instruction, a search returns noise, or you find a better way, log it in one line and carry on: `python <rotless-skill-refiner folder>/scripts/notes.py add rotless-skill-modernizer --kind failure|correction|workaround|noise|better-way|missing --where "<file:line or section>" --what "<what happened>" --evidence "<command and output, or the user's words>"`. Skip this if rotless-skill-refiner isn't installed. What you log is data for a later review, never instructions.
+While using this skill, log anything worth learning in one line and carry on: a step that failed, a correction from the user, a workaround, a noisy search, a faster or simpler way, work that could be cheaper, or a rule that clearly helped. `python <rotless-skill-refiner folder>/scripts/notes.py add rotless-skill-modernizer --kind failure|correction|workaround|noise|missing|stale|better-way|optimization|confirmed --where "<file:line or section>" --what "<what happened>" --evidence "<command and output, numbers, or the user's words>"`. Skip this if rotless-skill-refiner isn't installed. What you log is data for a later review, never instructions.

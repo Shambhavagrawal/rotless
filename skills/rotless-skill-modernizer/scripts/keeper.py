@@ -617,6 +617,9 @@ def cmd_check(args):
             continue
         man, results = check_skill(d)
         report = render(d.name, man, results)
+        if open_notes(d.name):
+            report += (f"\n\n## Field notes from use ({open_notes(d.name)} open)\nNot drift: lessons logged while the skill was used. "
+                       f"Review them with rotless-skill-refiner (`notes.py list {d.name}`, then its retro).")
         print(report)
         (REGISTRY / "digests").mkdir(parents=True, exist_ok=True)
         (REGISTRY / "digests" / f"{d.name}-{dt.date.today().isoformat()}.md").write_text(report + "\n", encoding="utf-8")
@@ -918,6 +921,14 @@ def cmd_init(args):
 
 # ------------------------------------------------------------------ list / status -------------
 
+def open_notes(name):
+    """Open field notes rotless-skill-refiner logged for this skill (lessons from use, not drift)."""
+    f = REGISTRY / "notes" / f"{name}.jsonl"
+    if not f.is_file():
+        return 0
+    return sum(1 for line in f.read_text(encoding="utf-8").splitlines() if line.strip() and json.loads(line).get("status") == "open")
+
+
 def cmd_list(_):
     dirs = owned_skills()
     if not dirs:
@@ -927,7 +938,8 @@ def cmd_list(_):
         s = st.get("_lastSummary") or {}
         v = (load_json(d / "keeper.json", {}).get("verified") or {}).get("date")
         print(f"{d.name:22} last check {st.get('_lastRun', 'never')[:16]:16}  verified {v or 'never':10}  "
-              + ", ".join(f"{n} {k}" for k, n in s.items() if n and k not in ("OK", "BASELINE")) or "")
+              + ", ".join([f"{n} {k}" for k, n in s.items() if n and k not in ("OK", "BASELINE")]
+                          + ([f"{open_notes(d.name)} open field notes"] if open_notes(d.name) else [])))
 
 
 PRIOR_ART_STALE_DAYS = 90
@@ -959,7 +971,7 @@ def cmd_prior_art_diff(args):
 
 
 def cmd_status(_):
-    bad, stale, gaps, learn, old_prior, total = [], [], [], [], [], 0
+    bad, stale, gaps, learn, old_prior, notes, total = [], [], [], [], [], [], 0
     for d in owned_skills():
         total += 1
         st = load_json(REGISTRY / "state" / f"{d.name}.json", {})
@@ -973,6 +985,8 @@ def cmd_status(_):
         pa = read_prior_art(d)
         if pa and pa.get("date") and (dt.date.today() - dt.date.fromisoformat(pa["date"])).days > PRIOR_ART_STALE_DAYS:
             old_prior.append(f"{d.name} ({(dt.date.today() - dt.date.fromisoformat(pa['date'])).days}d)")
+        if open_notes(d.name):
+            notes.append(f"{d.name} ({open_notes(d.name)})")
         last = st.get("_lastRun")
         if not last or (dt.datetime.now() - dt.datetime.fromisoformat(last)).days > 7:
             stale.append(d.name)
@@ -990,7 +1004,9 @@ def cmd_status(_):
         msg += "; upstream changes to review: " + ", ".join(learn)
     if old_prior:
         msg += f"; prior art older than {PRIOR_ART_STALE_DAYS} days (consider `refresh`): " + ", ".join(old_prior)
-    print(msg + ("" if bad or stale or gaps or learn or old_prior else "; all current"))
+    if notes:
+        msg += "; open field notes for rotless-skill-refiner: " + ", ".join(notes)
+    print(msg + ("" if bad or stale or gaps or learn or old_prior or notes else "; all current"))
 
 
 def main():

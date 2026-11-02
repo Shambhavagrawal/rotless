@@ -1,6 +1,6 @@
 # rotless
 
-**Agent skills rot.** A skill says "`gh search code` allows 10 requests a minute", "call this endpoint", "use this flag". Then the CLI ships a new version, the API changes shape, a step quietly stops working, and the skill keeps confidently telling your agent things that are no longer true. Worse, every time it goes wrong in use, the lesson dies with that conversation.
+**Agent skills rot.** A skill says "`gh search code` allows 10 requests a minute", "call this endpoint", "use this flag". Then the CLI ships a new version, the API changes shape, a step quietly stops working, and the skill keeps confidently telling your agent things that are no longer true. And every time you learn something while using it, a fix or a faster way, the lesson dies with that conversation.
 
 rotless is four [Agent Skills](https://agentskills.io) that build skills which stay true, and get better every time they're used:
 
@@ -9,12 +9,12 @@ rotless is four [Agent Skills](https://agentskills.io) that build skills which s
 | **rotless-github-research** | Before you build: finds every repo, package and tool that already does it (code search, repo search, commits, issues, plus 20 sources off GitHub such as npm, crates.io, Docker Hub, Hugging Face and the MCP Registry), verifies each one, and tells you what to reuse, what to borrow and where the gap is. |
 | **rotless-skill-creator** | Builds the skill: a failing baseline first, an interview, the draft, test cases run with and without the skill, a review viewer, trigger tuning, and spec + portability validation. Runs tests on Claude Code, Codex and other agent CLIs. |
 | **rotless-skill-modernizer** | Keeps it true as the world changes: a `keeper.json` lists every CLI, API, MCP server, repo, doc and limit the skill relies on, each with a check. `check` tells you what drifted and the exact line to fix. |
-| **rotless-skill-refiner** | Makes it better from real use: gaps get logged while you work (a failed step, your correction, a better way), and a retro turns them into small edits, **each with a check that fails on the old skill and passes on the new one**. Each pass leaves the next one better. |
+| **rotless-skill-refiner** | Makes it better from real use: fixes when something went wrong, optimizations when it worked but could be faster, cheaper or simpler. Notes get logged while you work, and a retro turns them into small edits, **each with a check**: a fix must fail on the old skill and pass on the new one; an optimization must measure better on the same test cases with nothing worse. Each pass leaves the next one better. |
 
 ```
 idea ─► research ─► create ─► modernize ─► use ─► refine ─┐
-        exists?     build +    record what   field    retro + a check  │
-        borrow?     test       it relies on  notes    per lesson  ◄───┘
+        exists?     build +    record what   field    fixes and   │
+        borrow?     test       it relies on  notes    optimizations ◄─┘
 ```
 
 Works with any agent that reads `SKILL.md`: Claude Code, Codex, Gemini CLI, Cursor, GitHub Copilot, OpenCode and the rest. No hooks, no daemons, no telemetry: plain skills and standard-library Python.
@@ -54,12 +54,15 @@ Paste this into your agent's global instructions file (`~/.claude/CLAUDE.md`, `~
 
 ## Use
 
-Ask in plain words, or call a skill by name (`/rotless-skill-refiner` in Claude Code, `$rotless-skill-refiner` in Codex):
+Ask in plain words, or call a skill by name (`/rotless-skill-refiner` in Claude Code, `$rotless-skill-refiner` in Codex). Which skill answers depends on where the cause lives, not on words like "check" or "broke":
 
-- *"Is there anything on GitHub that already scrapes exam results?"* → research
-- *"Make a skill that turns my standup notes into a Slack post"* → create (it runs research first)
-- *"Check my skills"* / *"what broke in my pdf skill?"* → modernize
-- *"That's the third time my deploy skill picked the wrong env. Fix it for next time."* / *"retro my changelog skill"* → refine
+| You say | Skill |
+|---|---|
+| "Is there anything on GitHub that already scrapes exam results?" | research |
+| "Make a skill that turns my standup notes into a Slack post" | create (it runs research first) |
+| "Check my skills", "is my scraper skill still up to date?", "I upgraded gh, did anything break?" | modernize: the outside world changed; `check` also lists open field notes |
+| "My pdf skill mangled the tables again, fix it for next time", "what went wrong with my deploy skill?" | refine: it misbehaved in use (it runs modernize's `check` first to rule out drift) |
+| "My release-notes skill works but takes 8 tool calls, make it leaner", "retro my changelog skill" | refine: an optimization, measured before and after |
 
 Every change to a skill waits for your approval. Checks run only when you ask, and the only network calls are the checks themselves. State lives in a local git repo next to your skills folder (`skill-registry/`), never pushed.
 

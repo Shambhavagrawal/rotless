@@ -1,0 +1,10 @@
+[
+ {"query": "can you check my skills? I haven't looked at any of them in about a month", "should_trigger": true},
+ {"query": "is my github-scraper skill still accurate? gh just released a new version and I think some flags changed", "should_trigger": true},
+ {"query": "I upgraded wrangler to v4 this morning, did that break any of my skills?", "should_trigger": true},
+ {"query": "the openai endpoint my summarizer skill calls got deprecated last week, can you bring the skill up to date", "should_trigger": true},
+ {"query": "ugh, my pdf-invoices skill told you to use pdftotext -layout and it mangled the tables again. I wrote that skill, can you make sure it stops happening?", "should_trigger": false},
+ {"query": "can you optimize my sql-review skill? it burns a ton of tokens re-reading the whole style guide every time", "should_trigger": false},
+ {"query": "create a new skill that summarises my weekly standup notes into a slack post", "should_trigger": false},
+ {"query": "check this python file for bugs before I push: src/billing/invoice.py", "should_trigger": false}
+]

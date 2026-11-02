@@ -108,6 +108,9 @@ def validate_skill(skill_path):
         return False, "metadata must be a mapping of string keys to string values", []
 
     warnings = []
+    if not (skill_path / "keeper.json").is_file():
+        warnings.append("no keeper.json: the CLIs, APIs, docs and limits this skill relies on aren't tracked; "
+                        "run rotless-skill-modernizer init <skill> (rotless-skill-creator step 8)")
     lines = body.splitlines()
     if len(lines) > 500:
         warnings.append(f"SKILL.md body is {len(lines)} lines; keep it under 500 and move detail to references/")

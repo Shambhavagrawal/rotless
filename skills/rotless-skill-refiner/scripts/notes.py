@@ -28,7 +28,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent             # <skills folder>/rotless-skill-refiner/scripts
 SKILLS_ROOT = HERE.parent.parent
-KINDS = ["failure", "correction", "workaround", "noise", "better-way", "missing", "stale"]
+KINDS = ["failure", "correction", "workaround", "noise", "missing", "stale", "better-way", "optimization", "confirmed"]
 CLOSE_AS = ["resolved", "rejected", "routed", "duplicate"]
 MAX_FIELD = 2000
 
@@ -141,6 +141,9 @@ def cmd_stats(a):
         for w, c in sorted(spots.items(), key=lambda x: -x[1]):
             if c >= 2:
                 print(f"  hot spot: {w} ({c} open notes)")
+        for n in open_:
+            if n["kind"] == "confirmed":
+                print(f"  confirmed (keep): {n['where']}: {n['what'][:80]}")
         for n in notes:
             if n["status"] == "rejected":
                 print(f"  rejected before: {n['what'][:80]} -> {n.get('closed', {}).get('reason', '')}")
@@ -182,6 +185,7 @@ def cmd_selftest(_):
         sk = tmp / "toy-skill"
         sk.mkdir()
         (sk / "SKILL.md").write_text("---\nname: toy-skill\ndescription: x\n---\nbody\n", encoding="utf-8")
+        assert "optimization" in KINDS and "confirmed" in KINDS
         ns = argparse.Namespace(skill=str(sk), kind="failure", where="SKILL.md:4", what="step failed",
                                 evidence="token=abc123 and ghp_" + "a" * 30 + " and api_key: 'zzz'", expected="", agent="codex")
         assert cmd_add(ns) == 0

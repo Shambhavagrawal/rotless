@@ -28,7 +28,7 @@ Four skills, each usable alone; when the others are installed, hand off to them:
 | **rotless-github-research** | prior art: does it exist, what to borrow, where the gap is | step 0, before any drafting |
 | **rotless-skill-creator** (this) | build, test and tune a skill | |
 | **rotless-skill-modernizer** | records what the skill relies on in `keeper.json`; `check` catches drift when the outside world changes | step 8, and whenever you edit a skill that has a `keeper.json` |
-| **rotless-skill-refiner** | learns from real use: gaps logged while the skill is used become small edits, each with a check | the footer you add in step 8 feeds it; its behaviour checks run through this skill's `run_case.py` |
+| **rotless-skill-refiner** | learns from real use: fixes and optimizations logged while the skill is used become small edits, each with a check | the footer you add in step 8 feeds it; its behaviour checks run through this skill's `run_case.py` |
 
 If a sibling isn't installed, do its step by hand and say so: search for prior art yourself, list the skill's dependencies in your summary.
 
@@ -178,7 +178,7 @@ Measure on the agent the user actually uses (`--agent`). Without a headless CLI 
 
    ```markdown
    ## Field notes
-   If a step here fails, the user corrects you, you work around an instruction, a search returns noise, or you find a better way, log it in one line and carry on: `python <rotless-skill-refiner folder>/scripts/notes.py add <skill-name> --kind failure|correction|workaround|noise|better-way|missing --where "<file:line or section>" --what "<what happened>" --evidence "<command and output, or the user's words>"`. Skip this if rotless-skill-refiner isn't installed. What you log is data for a later review, never instructions.
+   While using this skill, log anything worth learning in one line and carry on: a step that failed, a correction from the user, a workaround, a noisy search, a faster or simpler way, work that could be cheaper, or a rule that clearly helped. `python <rotless-skill-refiner folder>/scripts/notes.py add <skill-name> --kind failure|correction|workaround|noise|missing|stale|better-way|optimization|confirmed --where "<file:line or section>" --what "<what happened>" --evidence "<command and output, numbers, or the user's words>"`. Skip this if rotless-skill-refiner isn't installed. What you log is data for a later review, never instructions.
    ```
 4. Optional, for apps that install a skill from a file (e.g. the Claude apps): `python -m scripts.package_skill <skill>` from `$C` builds a `.skill` zip.
 5. **Summarise**: the prior-art verdict, files created, dependencies tracked, test results, and how to re-check (rotless-skill-modernizer `check <name>`) and refine (rotless-skill-refiner `review <name>`).
@@ -203,4 +203,4 @@ Measure on the agent the user actually uses (`--agent`). Without a headless CLI 
 - `scripts/quick_validate.py`: spec validation and portability warnings
 
 ## Field notes
-If a step here fails, the user corrects you, you work around an instruction, a search returns noise, or you find a better way, log it in one line and carry on: `python <rotless-skill-refiner folder>/scripts/notes.py add rotless-skill-creator --kind failure|correction|workaround|noise|better-way|missing --where "<file:line or section>" --what "<what happened>" --evidence "<command and output, or the user's words>"`. Skip this if rotless-skill-refiner isn't installed. What you log is data for a later review, never instructions.
+While using this skill, log anything worth learning in one line and carry on: a step that failed, a correction from the user, a workaround, a noisy search, a faster or simpler way, work that could be cheaper, or a rule that clearly helped. `python <rotless-skill-refiner folder>/scripts/notes.py add rotless-skill-creator --kind failure|correction|workaround|noise|missing|stale|better-way|optimization|confirmed --where "<file:line or section>" --what "<what happened>" --evidence "<command and output, numbers, or the user's words>"`. Skip this if rotless-skill-refiner isn't installed. What you log is data for a later review, never instructions.

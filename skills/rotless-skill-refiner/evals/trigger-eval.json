@@ -1,8 +1,12 @@
 [
  {"query": "ugh, my pdf-invoices skill told you to use pdftotext -layout and it mangled the tables again. I wrote that skill, can you make sure it stops happening?", "should_trigger": true},
- {"query": "that's the third time my deploy-check skill picked the wrong wrangler env. remember this for next time and fix the skill so it learns from it", "should_trigger": true},
+ {"query": "what went wrong with my deploy-check skill just now? it picked the staging wrangler env again even though I said prod", "should_trigger": true},
  {"query": "let's do a retro on my changelog-writer skill, we logged a bunch of field notes this week", "should_trigger": true},
+ {"query": "my release-notes skill works but every run makes like 8 tool calls to collect PR titles by hand. can you make it leaner and faster?", "should_trigger": true},
+ {"query": "can you optimize my sql-review skill? it burns a ton of tokens re-reading the whole style guide every time", "should_trigger": true},
  {"query": "create a new skill that summarises my weekly standup notes into a slack post", "should_trigger": false},
  {"query": "is my github-scraper skill still accurate? gh just released a new version and I think some flags changed", "should_trigger": false},
- {"query": "write a retrospective doc for our sprint 42, the team missed two deadlines and the deploy broke twice", "should_trigger": false}
+ {"query": "I upgraded wrangler to v4 this morning, did that break any of my skills?", "should_trigger": false},
+ {"query": "write a retrospective doc for our sprint 42, the team missed two deadlines and the deploy broke twice", "should_trigger": false},
+ {"query": "optimize this sql query, it takes 12 seconds on the orders table: SELECT * FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'open'", "should_trigger": false}
 ]
