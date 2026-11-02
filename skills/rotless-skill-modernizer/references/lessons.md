@@ -82,3 +82,15 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `manifest()` reads `rotless.json`, else the old `keeper.json`; `init` writes `rotless.draft.json`; `check` and `lint` suggest renaming an old-name file | the four rotless skills renamed theirs
 - Check: scripts/test_keeper.py L-13 (red on snapshot 20261102-195832, green after): new and old names both lint and check, the old name gets the hint, init writes the new draft name
 - Why: "keeper" was the skill's old name (skill-keeper); the file travels into every skill built with rotless, so its name should say where it comes from
+
+## L-2026-11-02-14: new repos in a skill's space stay listed until reviewed
+- From: the user's design review, 2026-11-02 · verdict: fix
+- Change: Start: `chk_search` keeps unreviewed repos out of "seen", so they're reported NEW in every check, with a hint to research them with rotless-github-research; `ack <skill> search:<name>` marks them reviewed (`accept_search`). `fix` now offers that research.
+- Check: scripts/test_keeper.py L-14 (red on snapshot 20261102-212306, green after)
+- Why: a check marked every new repo as seen the moment it reported it, so one ignored report meant the repo was never shown again and nobody looked at what could be borrowed
+
+## L-2026-11-02-15: skills remind you when they haven't been updated or checked for a while
+- From: the user's design review, 2026-11-02 · verdict: fix
+- Change: Start: `rotless.json` records `updated` (new `keeper.py updated` command; `init` sets it) and `checked` (a clean `check` sets it); `freshness()` uses `remindAfterDays`, 15 by default; `status` and `list` name skills that are due; the field-notes footer asks the agent to offer a check at the end of a task when its skill is due
+- Check: scripts/test_keeper.py L-15 (red on snapshot 20261102-212306, green after)
+- Why: checks run only on demand, and nothing reminded anyone to ask; `status` only knew the last check run and used a fixed 7 days

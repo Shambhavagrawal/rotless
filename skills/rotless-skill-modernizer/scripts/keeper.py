@@ -10,6 +10,7 @@ manifest listing them; this engine checks them and reports only what changed.
   keeper.py check <skill>... | --all run every check; print + save a digest; exit 1 if action needed
   keeper.py ack   <skill> [ID ...]   accept current upstream values as the new baseline (e.g. a new CLI version you verified)
   keeper.py own   <skill>            mark a skill as yours, so `check` runs the commands in its rotless.json
+  keeper.py updated <skill> [--note]   record that the skill was just changed (resets its freshness clock)
   keeper.py lint  [skill ...]        offline gate for CI: manifests parse, claim quotes present, nothing untracked
   keeper.py prior-art-diff <skill> <new file>   compare a refreshed prior-art.md with the current one
   keeper.py list                     your skills, their last result and open field notes
@@ -528,13 +529,20 @@ def chk_search(d, prev):
     names = {r["fullName"] for r in rows}
     if prev is None:
         return [result(cid, "BASELINE", f"{len(names)} repos recorded as known")], {"seen": sorted(names)}
+    # a new repo stays NEW until someone reviews it and acks it; it never drops out unseen (lesson L-2026-11-02-14)
     new = sorted((r for r in rows if r["fullName"] not in set(prev["seen"])), key=lambda r: (len(r["matched"]), r["stars"]), reverse=True)
-    st = {"seen": sorted(names | set(prev["seen"]))}
+    st = {"seen": sorted(prev["seen"])}
     if not new:
         return [result(cid, "OK", "no new repos")], st
     lines = "; ".join(f"{r['fullName']} ({r['stars']}★) {r['description'][:60]}" for r in new[:8])
     return [result(cid, "NEW", f"{len(new)} new repo(s): {lines}" + (" …" if len(new) > 8 else ""),
-                   "look at them with the rotless-github-research skill; borrow ideas or cite them, then they stay 'seen'")], st
+                   f"research them with rotless-github-research (borrow, cite or ignore), record the outcome in "
+                   f"references/prior-art.md, then `keeper.py ack <skill> {cid}`", value=[r["fullName"] for r in new])], st
+
+
+def accept_search(entry, names):
+    """Mark landscape repos as reviewed, so `check` stops reporting them."""
+    return {"seen": sorted(set((entry or {}).get("seen", [])) | set(names))}
 
 
 def skill_texts(skill_dir):
@@ -641,7 +649,7 @@ def check_skill(skill_dir):
     except Exception as e:
         results.append(result("coverage", "WARN", f"coverage scan crashed: {type(e).__name__}: {str(e)[:100]}"))
     for r in results:  # remember values that `ack` can accept
-        if r["value"] is not None and r["status"] in ("CHANGED", "INFO", "LEARN"):
+        if r["value"] is not None and r["status"] in ("CHANGED", "INFO", "LEARN", "NEW"):
             state.setdefault("_pending", {})[r["id"]] = r["value"]
     state["_lastRun"] = dt.datetime.now().isoformat(timespec="seconds")
     state["_lastSummary"] = {s: sum(r["status"] == s for r in results) for s in STATUS_ORDER}
@@ -712,6 +720,9 @@ def cmd_check(args):
         (REGISTRY / "digests" / f"{d.name}-{dt.date.today().isoformat()}.md").write_text(report + "\n", encoding="utf-8")
         s = {k: sum(r["status"] == k for r in results) for k in STATUS_ORDER}
         needs_action |= bool(s["FAIL"] or s["CHANGED"])
+        if not (s["FAIL"] or s["CHANGED"]):  # nothing drifted: the skill is current as of today (L-2026-11-02-15)
+            man["checked"] = dt.date.today().isoformat()
+            save_json(manifest(d), man)
         commit_registry(f"check {d.name}: " + ", ".join(f"{v} {k}" for k, v in s.items() if v))
     sys.exit(1 if needs_action else 0)
 
@@ -736,6 +747,9 @@ def cmd_ack(args):
             if did in (cid, base) and val is not None and dep.get("type") in ("cli", "package"):
                 dep["tested"] = str(val)
                 done.append(f"{did}: tested -> {val}")
+        if cid.startswith("search:") and val:
+            state[cid] = accept_search(state.get(cid), val)
+            done.append(f"{cid}: {len(val)} new repo(s) reviewed")
         if cid.startswith("doc:") and cid in state and state[cid].get("pending"):
             state[cid] = {"hash": state[cid]["pending"], "chars": state[cid].get("pendingChars")}
             done.append(f"{cid}: new content accepted")
@@ -1012,7 +1026,8 @@ def cmd_init(args):
                  "_from": "references/prior-art.md"}] if prior and prior["queries"] else []
     draft = {"_draft": f"generated {dt.date.today().isoformat()} by keeper.py init: curate it (delete noise, add expectations, "
                        "give claims a check, add an \"ignore\" list for references you deliberately don't track), then rename to rotless.json",
-             "skill": d.name, "verified": {"date": None, "note": ""}, "deps": deps, "claims": claims, "ignore": [],
+             "skill": d.name, "verified": {"date": None, "note": ""},
+             "updated": {"date": dt.date.today().isoformat(), "note": "created"}, "deps": deps, "claims": claims, "ignore": [],
              "landscape": {"searches": searches}}
     if prior and prior.get("verdict"):
         draft["priorArt"] = {"verdict": prior["verdict"], "file": "references/prior-art.md"}
@@ -1030,6 +1045,28 @@ def cmd_init(args):
 
 
 # ------------------------------------------------------------------ own / lint ----------------
+
+REMIND_AFTER_DAYS = 15
+
+
+def freshness(man):
+    """(days since the skill was last updated or cleanly checked, its threshold). Days is None if neither is recorded.
+    The threshold is the manifest's remindAfterDays, 15 by default (lesson L-2026-11-02-15)."""
+    dates = [(man.get("updated") or {}).get("date"), man.get("checked"), (man.get("verified") or {}).get("date")]
+    dates = [dt.date.fromisoformat(x) for x in dates if x]
+    days = (dt.date.today() - max(dates)).days if dates else None
+    return days, int(man.get("remindAfterDays", REMIND_AFTER_DAYS))
+
+
+def cmd_updated(args):
+    d = resolve_skill(args.skill)
+    man = load_json(manifest(d), {})
+    if not man:
+        sys.exit(f"{d.name} has no rotless.json")
+    man["updated"] = {"date": dt.date.today().isoformat(), "note": args.note or ""}
+    save_json(manifest(d), man)
+    print(f"{d.name}: updated {man['updated']['date']}" + (f" ({args.note})" if args.note else ""))
+
 
 def cmd_own(args):
     d = resolve_skill(args.skill)
@@ -1088,8 +1125,11 @@ def cmd_list(_):
     for d in dirs:
         st = load_json(REGISTRY / "state" / f"{d.name}.json", {})
         s = st.get("_lastSummary") or {}
-        v = (load_json(manifest(d), {}).get("verified") or {}).get("date")
-        print(f"{d.name:22} last check {st.get('_lastRun', 'never')[:16]:16}  verified {v or 'never':10}  "
+        man = load_json(manifest(d), {})
+        v = (man.get("verified") or {}).get("date")
+        days, limit = freshness(man)
+        age = "never updated or checked" if days is None else f"updated or checked {days}d ago" + (" (due)" if days > limit else "")
+        print(f"{d.name:22} last check {st.get('_lastRun', 'never')[:16]:16}  verified {v or 'never':10}  {age}  "
               + ", ".join([f"{n} {k}" for k, n in s.items() if n and k not in ("OK", "BASELINE")]
                           + ([f"{open_notes(d.name)} open field notes"] if open_notes(d.name) else [])))
 
@@ -1139,9 +1179,9 @@ def cmd_status(_):
             old_prior.append(f"{d.name} ({(dt.date.today() - dt.date.fromisoformat(pa['date'])).days}d)")
         if open_notes(d.name):
             notes.append(f"{d.name} ({open_notes(d.name)})")
-        last = st.get("_lastRun")
-        if not last or (dt.datetime.now() - dt.datetime.fromisoformat(last)).days > 7:
-            stale.append(d.name)
+        days, limit = freshness(load_json(manifest(d), {}))
+        if days is None or days > limit:
+            stale.append(f"{d.name} ({'never' if days is None else f'{days}d'})")
     if not total:
         print("rotless-skill-modernizer: no authored skills registered")
         return
@@ -1149,7 +1189,7 @@ def cmd_status(_):
     if bad:
         msg += "; NEED FIXING: " + ", ".join(bad)
     if stale:
-        msg += "; not checked in 7+ days: " + ", ".join(stale)
+        msg += "; not updated or checked recently (run `check`): " + ", ".join(stale)
     if gaps:
         msg += "; manifest gaps: " + ", ".join(gaps)
     if learn:
@@ -1174,6 +1214,9 @@ def main():
     a.add_argument("skill")
     a.add_argument("ids", nargs="*")
     a.add_argument("--note")
+    u = sub.add_parser("updated", help="record that a skill was just changed (resets its freshness clock)")
+    u.add_argument("skill")
+    u.add_argument("--note")
     o = sub.add_parser("own", help="mark a skill as yours, so `check` runs the commands in its rotless.json")
     o.add_argument("skill")
     li = sub.add_parser("lint", help="offline: manifests parse, claim quotes present, nothing untracked (for CI)")
@@ -1186,7 +1229,7 @@ def main():
     args = p.parse_args()
     if args.cmd == "check" and not (args.all or args.skills):
         p.error("give skill names or --all")
-    {"init": cmd_init, "check": cmd_check, "ack": cmd_ack, "list": cmd_list, "status": cmd_status, "own": cmd_own, "lint": cmd_lint,
+    {"init": cmd_init, "check": cmd_check, "ack": cmd_ack, "list": cmd_list, "status": cmd_status, "own": cmd_own, "lint": cmd_lint, "updated": cmd_updated,
      "prior-art-diff": cmd_prior_art_diff}[args.cmd](args)
 
 

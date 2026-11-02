@@ -198,5 +198,10 @@
     "python": "runtime, not a versioned dependency",
     "python3": "runtime alias",
     "code search hit its 10/min": "prior-art ledger note about the research run, not a claim the skill makes"
-  }
+  },
+  "updated": {
+    "date": "2026-11-02",
+    "note": "freshness reminder in the footer; 0.1.0 work"
+  },
+  "checked": "2026-11-02"
 }

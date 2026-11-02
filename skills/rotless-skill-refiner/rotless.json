@@ -203,5 +203,10 @@
     "python3": "runtime alias",
     "claude": "named in prior-art.md (claude-reflect), not a CLI this skill runs",
     "code search 10/min": "prior-art ledger note about the research run, not a claim the skill makes"
-  }
+  },
+  "updated": {
+    "date": "2026-11-02",
+    "note": "freshness reminder in the footer; 0.1.0 work"
+  },
+  "checked": "2026-11-02"
 }

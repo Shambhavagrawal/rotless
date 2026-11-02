@@ -12,6 +12,10 @@ Tools such as claude-reflect capture your corrections and write them into memory
 
 Yes. When the others are installed, each hands off to them; when they aren't, it does that step itself or tells you what to do by hand.
 
+## When should I run the modernizer?
+
+Whenever you like: after upgrading a tool a skill uses, or when you notice something changed. Nothing runs on a schedule. You don't have to keep track, though: each skill built with rotless records when it was last updated and checked, and once that's more than 15 days ago (adjustable per skill with `remindAfterDays` in its `rotless.json`) it offers a check at the end of a task.
+
 ## Does anything leave my machine?
 
 Only the calls you ask for: searches by the research skill, the modernizer's checks, and test runs through your own agent. There is no telemetry and no hosted service. [privacy.md](privacy.md) lists every call and what is stored locally.

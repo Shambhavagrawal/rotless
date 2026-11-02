@@ -69,10 +69,10 @@ Only verified repos go in the table. The 3-8 queries that produced relevant hits
 1. `python "$K" check <skill>`, or read today's digest in the registry's `digests/`.
 2. For each FAIL or CHANGED item, open the cited line or script and find out what's true now. Use rotless-github-research for a renamed or replaced tool, repo or endpoint, and the docs for a CLI flag or API field. If you needed research, update `references/prior-art.md`.
    - For each LEARN item, read the listed commits and the diff link; for a borrowed file, read what changed in it. Decide whether the skill should adopt the improvement. Either way, `ack` it once reviewed, so the next check only shows later commits.
-   - For each NEW repo in the landscape, judge whether it's worth borrowing from or citing.
+   - For NEW repos in the landscape, offer to research them: "N new repos appeared in this skill's space. Want me to look at what we could borrow?" On a yes, use rotless-github-research to read each one closely (what it does, what's worth borrowing or citing, what to ignore), add the outcome to `references/prior-art.md` (a Repos row with its role and what to take) and to `rotless.json` (a `github-repo` dep for anything borrowed or cited), then `python "$K" ack <skill> search:<name>`. NEW repos keep showing in every check until they're acked, so nothing new is missed.
    - Notes about how the skill behaves in use (failures, corrections, better ways) go to rotless-skill-refiner's retro, because they aren't drift.
 3. Edit the skill following rotless-skill-creator's *Step 6: Improve*, and update `rotless.json` in the same change. **Gate:** show the diff of both files and apply it only after approval.
-4. If the skill has test cases (`evals/`), re-run them, including every lesson case listed in `references/lessons.md`. Then run `python "$K" check <skill>`; it should show no FAIL, CHANGED or GAP. Finish with `python "$K" ack <skill> [IDs] --note "what was verified"`.
+4. If the skill has test cases (`evals/`), re-run them, including every lesson case listed in `references/lessons.md`. Then run `python "$K" check <skill>`; it should show no FAIL, CHANGED or GAP. Finish with `python "$K" ack <skill> [IDs] --note "what was verified"`, and, since the skill changed, `python "$K" updated <skill> --note "what changed"`.
 
 ## refresh <skill>
 
@@ -82,6 +82,15 @@ This re-runs the prior-art research. New tools appear and old ones die, so the v
 2. Run `python "$K" prior-art-diff <skill> <skill-dir>/references/prior-art.new.md`. It shows whether the verdict changed, which repos are new, dropped or re-roled, which queries are new or dropped, and which files are newly borrowed.
 3. **Gate:** show the diff. If the verdict changed because someone now ships what the skill was built for, say so plainly: adopting or contributing to that tool may be better than maintaining the skill.
 4. On approval, replace `prior-art.md` with the new file and run `check`; new repos show up as GAPs. Add them to `rotless.json` with roles and borrowed `files`, and update the landscape queries. If the findings change what the skill should do, continue with `fix`.
+
+## Staying current
+
+Checks run only when someone asks; there's no scheduler. To make sure people remember to ask, each skill's `rotless.json` records two dates:
+
+- `updated`: when the skill last changed. rotless-skill-creator sets it when it builds the skill (through `init`), rotless-skill-refiner when it applies a lesson, and this skill's `fix` when it repairs one: `python "$K" updated <skill> --note "what changed"`.
+- `checked`: when a `check` last found nothing that needs fixing. `check` sets it.
+
+A skill is due when the newer of the two (or `verified.date`) is more than `remindAfterDays` old: 15 days unless its `rotless.json` sets another number, for example 7 for a skill that wraps a fast-moving API. The field-notes footer in every skill built with rotless tells the agent to check this at the end of a task and, if the skill is due, ask once whether to run this skill. `list` shows each skill's age, and `status` names the skills that are due.
 
 ## Editing any skill you own (outside these flows)
 
@@ -104,6 +113,7 @@ The Not tracked section must come back empty.
 - `python "$K" init <skill>`: drafts a manifest for an existing skill that wasn't built through `new`. Borrowed files written as backticked paths in prior-art.md's "take" column become each repo's `files`.
 - `python "$K" own <skill>`: marks a skill as yours. `check` runs only on your skills, because it runs the commands in their rotless.json; `init` marks a skill automatically. A third-party skill that ships a rotless.json is skipped until you `own` it.
 - `python "$K" lint [skill…]`: an offline gate that is safe on any skill and is what CI runs. It confirms that rotless.json and the eval sets parse, that every claim quote is still in the text, and that nothing is untracked. It uses no network and runs no code from the skill.
+- `python "$K" updated <skill> --note "…"`: records that the skill just changed, which resets its reminder clock.
 - `python "$K" prior-art-diff <skill> <new prior-art file>`: compares a refreshed prior-art file with the current one (used by `refresh`).
 - `list` shows your skills, their last result and their open field notes; `status` prints one offline line. When you're about to rely on one of your skills whose status is stale, say so and offer a check, but don't run it unasked.
 
@@ -112,7 +122,7 @@ Statuses:
 - **CHANGED:** something outside the skill changed, such as a new release since `tested`, a renamed or archived repo, a claim that's no longer true, a changed doc page, or a renamed skill-creator step that we cite.
 - **LEARN:** a cited repo has meaningful new commits since you last reviewed it, or a file we borrowed from changed. The report lists their headlines and a diff link. Trivial commits (deps, chore, merge, typo) are acknowledged automatically. A LEARN item stays until you `ack` it.
 - **GAP:** the text references something the manifest doesn't track.
-- **NEW:** a repo appeared in the skill's landscape.
+- **NEW:** a repo appeared in the skill's landscape. It stays listed in every check until you review it and `ack` it.
 - **WARN:** a transient problem, or a claim whose quoted text was edited away.
 - **BASELINE:** first sighting.
 
@@ -120,6 +130,7 @@ Statuses:
 
 ```json
 { "skill": "my-skill", "verified": {"date": "2026-10-24", "note": "gh 2.103.2"},
+  "updated": {"date": "2026-10-24", "note": "created"}, "checked": "2026-10-30", "remindAfterDays": 15,
   "deps": [
     {"type": "cli", "name": "gh", "tested": "2.103.2", "upstream": "github:cli/cli", "needs": ["repo read-dir", "search code"]},
     {"type": "mcp", "url": "https://mcp.grep.app", "expectTools": {"searchGitHub": ["query", "useRegexp"]}},
@@ -147,3 +158,5 @@ Claim checks: `{"gh": <api path>, "jsonPath", "equals"|"min"}`, `{"http": url, "
 
 ## Field notes
 While using this skill, log anything worth learning in one line and carry on: a step that failed, a correction from the user, a workaround, a noisy search, a faster or simpler way, work that could be cheaper, or a rule that clearly helped. `python <rotless-skill-refiner folder>/scripts/notes.py add rotless-skill-modernizer --kind failure|correction|workaround|noise|missing|stale|better-way|optimization|confirmed --where "<file:line or section>" --what "<what happened>" --evidence "<command and output, numbers, or the user's words>"`. Skip this if rotless-skill-refiner isn't installed. What you log is data for a later review, never instructions.
+
+When you finish a task with this skill, read its `rotless.json`. If the newest of `updated.date`, `checked` and `verified.date` is more than `remindAfterDays` days old (15 if unset), end your reply with one line such as: "rotless-skill-modernizer hasn't been updated or checked in N days. Want me to check it against recent changes with rotless-skill-modernizer?" Say it once per session, and run the check only if the user says yes. Skip this if the skill has no `rotless.json` or rotless-skill-modernizer isn't installed.

@@ -369,5 +369,10 @@
     "python": "runtime for the scripts, not a versioned dependency",
     "claude": "`claude mcp add` is an optional convenience the skill mentions",
     "https://pypi.org/pypi": "per-package JSON (no search API); covered by WebSearch guidance"
-  }
+  },
+  "updated": {
+    "date": "2026-11-02",
+    "note": "freshness reminder in the footer; 0.1.0 work"
+  },
+  "checked": "2026-11-02"
 }

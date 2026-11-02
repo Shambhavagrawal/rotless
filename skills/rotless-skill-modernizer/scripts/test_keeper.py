@@ -203,8 +203,50 @@ k("init", str(draft))
 if not (draft / "rotless.draft.json").is_file():
     fails.append(f"L-13: init must write rotless.draft.json (wrote {sorted(p.name for p in draft.iterdir())})")
 
+# L-14: a new repo in a skill's landscape stays reported until it's reviewed (ack), then stops
+fake_research = tmp / "fake-research"
+(fake_research / "scripts").mkdir(parents=True)
+(fake_research / "scripts" / "ghsweep.py").write_text("", encoding="utf-8")
+real_find, real_run14 = keeper.find_skill, keeper.run
+keeper.find_skill = lambda name, include_synced=False: (fake_research, 1)
+rows = [{"fullName": n, "stars": 5, "description": "x", "matched": ["q"]} for n in ("a/a", "b/b")]
+keeper.run = lambda cmd, cwd=None, timeout=180: (0, json.dumps(rows), "")
+search = {"name": "space", "queries": ["q"]}
+r1, s1 = keeper.chk_search(search, {"seen": ["a/a"]})
+r2, s2 = keeper.chk_search(search, s1)
+if r2[0]["status"] != "NEW" or "b/b" not in r2[0]["detail"] or r2[0].get("value") != ["b/b"]:
+    fails.append(f"L-14: an unreviewed new repo must stay NEW on the next check (got {r2[0]['status']}: {r2[0]['detail'][:60]})")
+elif not hasattr(keeper, "accept_search") or keeper.chk_search(search, keeper.accept_search(s2, ["b/b"]))[0][0]["status"] != "OK":
+    fails.append("L-14: after review (accept_search), the repo must no longer be reported")
+keeper.find_skill, keeper.run = real_find, real_run14
+
+# L-15: freshness. A clean check stamps `checked`, `updated` stamps the update date, and `status` names a skill
+# that hasn't been updated or checked within its remindAfterDays (default 15)
+fresh = root / "freshy"
+fresh.mkdir()
+(fresh / "SKILL.md").write_text("---\nname: freshy\ndescription: x\n---\nThe sky is blue.\n", encoding="utf-8")
+(fresh / "rotless.json").write_text(json.dumps({"skill": "freshy", "deps": [], "updated": {"date": "2026-01-01", "note": "old"},
+                                                "remindAfterDays": 7}), encoding="utf-8")
+k("own", "freshy")
+before = k("status").stdout
+k("check", "freshy")
+after_check = json.loads((fresh / "rotless.json").read_text(encoding="utf-8"))
+k("updated", "freshy", "--note", "test edit")
+after_upd = json.loads((fresh / "rotless.json").read_text(encoding="utf-8"))
+after = k("status").stdout
+import datetime as _dt
+today = _dt.date.today().isoformat()
+if "freshy" not in before:
+    fails.append(f"L-15: status must name a skill not updated or checked for longer than its remindAfterDays ({before.strip()[:120]})")
+if after_check.get("checked") != today:
+    fails.append(f"L-15: a clean check must stamp checked={today} in rotless.json (got {after_check.get('checked')})")
+if (after_upd.get("updated") or {}).get("date") != today:
+    fails.append("L-15: `keeper.py updated` must stamp updated.date")
+if "freshy" in after.split("not updated or checked")[-1].split(";")[0] and "not updated or checked" in after:
+    fails.append(f"L-15: after a check, the skill must not be reported as stale ({after.strip()[:120]})")
+
 shutil.rmtree(tmp, ignore_errors=True)
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("ok: 12 keeper lessons hold")
+print("ok: 14 keeper lessons hold")

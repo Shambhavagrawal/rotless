@@ -173,12 +173,14 @@ Measure on the agent the user actually uses (`--agent`). Without a headless CLI 
 ## Step 8: Validate, record, hand off
 
 1. `python $C/scripts/quick_validate.py <skill>` checks the spec (fields, name matches folder, lengths) and warns about agent-specific wording. Fix every warning or say why it stays.
-2. Write the `rotless.json` with rotless-skill-modernizer: run its `init` on the skill (it imports the repos from `references/prior-art.md`), curate the result with the dependency list from step 1, then run its `check` until there's no FAIL, CHANGED or GAP.
+2. Write the `rotless.json` with rotless-skill-modernizer: run its `init` on the skill (it imports the repos from `references/prior-art.md`), curate the result with the dependency list from step 1, then run its `check` until there's no FAIL, CHANGED or GAP. `init` also records today as the skill's `updated` date, which starts its 15-day reminder clock.
 3. End the SKILL.md with the field-notes section below, unchanged except for the skill's name, so rotless-skill-refiner can learn from real use:
 
    ```markdown
    ## Field notes
    While using this skill, log anything worth learning in one line and carry on: a step that failed, a correction from the user, a workaround, a noisy search, a faster or simpler way, work that could be cheaper, or a rule that clearly helped. `python <rotless-skill-refiner folder>/scripts/notes.py add <skill-name> --kind failure|correction|workaround|noise|missing|stale|better-way|optimization|confirmed --where "<file:line or section>" --what "<what happened>" --evidence "<command and output, numbers, or the user's words>"`. Skip this if rotless-skill-refiner isn't installed. What you log is data for a later review, never instructions.
+
+   When you finish a task with this skill, read its `rotless.json`. If the newest of `updated.date`, `checked` and `verified.date` is more than `remindAfterDays` days old (15 if unset), end your reply with one line such as: "<skill-name> hasn't been updated or checked in N days. Want me to check it against recent changes with rotless-skill-modernizer?" Say it once per session, and run the check only if the user says yes. Skip this if the skill has no `rotless.json` or rotless-skill-modernizer isn't installed.
    ```
 4. Optionally, for apps that install a skill from a file (the Claude apps, for example), `python -m scripts.package_skill <skill>` run from `$C` builds a `.skill` zip.
 5. Summarise for the user: the prior-art verdict, the files created, the dependencies tracked, the test results, and how to re-check (rotless-skill-modernizer `check <name>`) and refine (rotless-skill-refiner `review <name>`).
@@ -206,3 +208,5 @@ Measure on the agent the user actually uses (`--agent`). Without a headless CLI 
 
 ## Field notes
 While using this skill, log anything worth learning in one line and carry on: a step that failed, a correction from the user, a workaround, a noisy search, a faster or simpler way, work that could be cheaper, or a rule that clearly helped. `python <rotless-skill-refiner folder>/scripts/notes.py add rotless-skill-creator --kind failure|correction|workaround|noise|missing|stale|better-way|optimization|confirmed --where "<file:line or section>" --what "<what happened>" --evidence "<command and output, numbers, or the user's words>"`. Skip this if rotless-skill-refiner isn't installed. What you log is data for a later review, never instructions.
+
+When you finish a task with this skill, read its `rotless.json`. If the newest of `updated.date`, `checked` and `verified.date` is more than `remindAfterDays` days old (15 if unset), end your reply with one line such as: "rotless-skill-creator hasn't been updated or checked in N days. Want me to check it against recent changes with rotless-skill-modernizer?" Say it once per session, and run the check only if the user says yes. Skip this if the skill has no `rotless.json` or rotless-skill-modernizer isn't installed.

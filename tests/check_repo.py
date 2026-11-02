@@ -10,6 +10,7 @@
 4. The only SKILL.md files are skills/<name>/SKILL.md (sample skills in test cases are SKILL.md.fixture).
 5. No hooks anywhere, as the README promises.
 6. Every skill has a trigger test set with should-trigger and should-not-trigger queries, and a Codex picker entry.
+7. The field-notes footer is the same in every skill and in both templates, apart from the skill's own name.
 
 Ideas for 1 and 4-5 come from google/elephant-goldfish-model's unit tests (Apache-2.0).
 """
@@ -176,6 +177,30 @@ for d in sorted(p for p in (ROOT / "skills").iterdir() if p.is_dir()):
         problems.append(f"{rel(d)}: no evals/trigger-eval.json")
     if not (d / "agents" / "openai.yaml").is_file():
         problems.append(f"{rel(d)}: no agents/openai.yaml (Codex picker entry)")
+
+# 7. one field-notes footer: identical in every skill and in both templates, apart from the skill's name
+def footer_text(text):
+    """The footer with the skill's two self-references (its notes command and its reminder line) made generic."""
+    text = re.sub(r"notes\.py add \S+", "notes.py add <skill-name>", text)
+    text = re.sub(r"\"[\w<>-]+ hasn't been updated", "\"<skill-name> hasn't been updated", text)
+    return re.sub(r"[ \t]+\n", "\n", text).strip()
+
+
+footers = {}
+for skill_md in sorted((ROOT / "skills").glob("*/SKILL.md")):
+    t = skill_md.read_text(encoding="utf-8")
+    footers[rel(skill_md)] = footer_text(t[t.rindex("## Field notes"):])
+for tpl in ("rotless-skill-creator", "rotless-skill-refiner"):
+    t = (ROOT / "skills" / tpl / "SKILL.md").read_text(encoding="utf-8")
+    m = re.search(r"```markdown\n(\s*## Field notes\n.*?)\n\s*```", t, re.S)
+    if m:
+        block = "\n".join(line[3:] if line.startswith("   ") else line for line in m.group(1).splitlines())
+        footers[f"skills/{tpl}/SKILL.md (template)"] = footer_text(block)
+    else:
+        problems.append(f"skills/{tpl}/SKILL.md: footer template not found")
+if len(set(footers.values())) > 1:
+    base = max(set(footers.values()), key=list(footers.values()).count)  # the version most copies agree on
+    problems += [f"{f}: field-notes footer differs from the others" for f, v in footers.items() if v != base]
 
 if problems:
     print("FAIL\n" + "\n".join(f"- {p}" for p in problems))

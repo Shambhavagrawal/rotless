@@ -21,15 +21,17 @@ rotless is four [Agent Skills](https://agentskills.io) that deal with both, for 
 |---|---|
 | rotless-github-research | Before you build, it searches for repos, packages and tools that already do the job: code search, repo search, commits and issues on GitHub, plus 21 other sources such as npm, crates.io, Docker Hub, Hugging Face models and papers, and the MCP Registry. It verifies each GitHub repo it reports (activity, health, real code), checks other hits by hand, and tells you what to reuse, what to borrow and where the gap is. |
 | rotless-skill-creator | Builds the skill: a failing baseline first, an interview, the draft, test cases run with and without the skill, a review viewer, trigger tuning, and spec and portability validation. Test runs are real agent sessions on your account, so they use its quota. |
-| rotless-skill-modernizer | Keeps the skill accurate as the world changes. Its `rotless.json` lists the CLIs, APIs, MCP servers, repos, docs and limits the skill relies on, each with a check, and a coverage check flags anything the text mentions that the list misses. `check` tells you what drifted and the line to fix. |
+| rotless-skill-modernizer | Keeps the skill accurate as the world changes. Its `rotless.json` lists the CLIs, APIs, MCP servers, repos, docs and limits the skill relies on, each with a check, and a coverage check flags anything the text mentions that the list misses. `check` tells you what drifted and the line to fix. It runs only when you ask; when a skill hasn't been updated or checked for 15 days, the skill itself offers a check at the end of a task. New repos in the skill's space stay listed until you've looked at what they offer. |
 | rotless-skill-refiner | Improves the skill from real use: fixes when something went wrong, and optimizations when it worked but could be faster, cheaper or simpler. You log notes while you work, and a retro turns them into small edits, each with a check. A fix must fail on the old skill and pass on the new one; an optimization must measure better on the same test cases with nothing worse. Each pass leaves the next one better. |
 
 ```
-idea ─► research ─► create ─► modernize ─► use ─► refine ───┐
-        exists?     build     record what  log    fix or    │
-        borrow?     + test    it relies on notes  optimize  │
-                                           ▲                │
-                                           └────────────────┘
+idea ─► research ─► create ─► use ◄───────────────────────┐
+                    │         │                           │
+                    │         ├─► refine ─────────────────┤  it misbehaved, or could be better
+                    │         │                           │
+                    │         └─► modernize ──────────────┘  you ask, or the skill reminds you
+                    │
+                    └─► writes rotless.json: what the skill relies on
 ```
 
 The skills follow the open Agent Skills spec, so any agent that reads `SKILL.md` can load them. Everything is plain skills and standard-library Python, with no hooks, background daemons or telemetry.
@@ -92,7 +94,7 @@ rotless-skill-refiner logs a field note, then proposes a small edit to the skill
 Check my skills.
 ```
 
-rotless-skill-modernizer runs the checks in each skill's `rotless.json`. It reports what changed outside the skill, such as a new CLI release or a moved API, with the line in the skill to fix, and lists any field notes still waiting for a retro.
+rotless-skill-modernizer runs the checks in each skill's `rotless.json`. It reports what changed outside the skill, such as a new CLI release or a moved API, with the line in the skill to fix, and lists any field notes still waiting for a retro. If new repos have appeared in the skill's space, it offers to research what you could borrow from them. You don't have to remember to ask: once a skill is 15 days past its last update or check, it offers this at the end of a task.
 
 ## Turn on the flow
 

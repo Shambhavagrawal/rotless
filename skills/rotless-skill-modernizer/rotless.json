@@ -121,5 +121,10 @@
   ],
   "_ignoreWhy": {
     "gh repo read-dir": "named in DESIGN.md as an example of gh's help behaviour, not used"
-  }
+  },
+  "updated": {
+    "date": "2026-11-02",
+    "note": "freshness reminder in the footer; 0.1.0 work"
+  },
+  "checked": "2026-11-02"
 }
