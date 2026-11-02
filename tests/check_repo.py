@@ -10,7 +10,9 @@
 4. The only SKILL.md files are skills/<name>/SKILL.md (sample skills in test cases are SKILL.md.fixture).
 5. No hooks anywhere, as the README promises.
 6. Every skill has a trigger test set with should-trigger and should-not-trigger queries, and a Codex picker entry.
-7. The field-notes footer is the same in every skill and in both templates, apart from the skill's own name.
+7. The field-notes footer is the same in every skill and in both templates, apart from the skill's own name,
+   and its reminder goes through `keeper.py status`.
+8. Every script or stylesheet an HTML page loads from the web is named in docs/privacy.md.
 
 Ideas for 1 and 4-5 come from google/elephant-goldfish-model's unit tests (Apache-2.0).
 """
@@ -198,11 +200,23 @@ for tpl in ("rotless-skill-creator", "rotless-skill-refiner"):
         footers[f"skills/{tpl}/SKILL.md (template)"] = footer_text(block)
     else:
         problems.append(f"skills/{tpl}/SKILL.md: footer template not found")
+for f, v in footers.items():
+    # the reminder goes through `keeper.py status`, which lists only skills the user owns (lesson L-2026-11-02-16)
+    if "keeper.py status" not in v:
+        problems.append(f"{f}: the field-notes footer must ask `keeper.py status`, so skills you didn't write never remind you")
 if len(set(footers.values())) > 1:
     base = max(set(footers.values()), key=list(footers.values()).count)  # the version most copies agree on
     problems += [f"{f}: field-notes footer differs from the others" for f, v in footers.items() if v != base]
 
+# 8. every file a page loads from the web is named in docs/privacy.md
+privacy = (ROOT / "docs" / "privacy.md").read_text(encoding="utf-8")
+for page in files("*.html"):
+    for url in re.findall(r"<(?:script|link)\b[^>]*\b(?:src|href)=\"(https?://[^\"]+)\"", page.read_text(encoding="utf-8")):
+        host = re.match(r"https?://([^/]+)", url).group(1)
+        if host not in privacy:
+            problems.append(f"{rel(page)}: loads {host}, which docs/privacy.md doesn't mention")
+
 if problems:
     print("FAIL\n" + "\n".join(f"- {p}" for p in problems))
     sys.exit(1)
-print("ok: links, skill paths, manifests, SKILL.md placement, no hooks, trigger tests")
+print("ok: links, skill paths, manifests, SKILL.md placement, no hooks, trigger tests, footers, page loads")

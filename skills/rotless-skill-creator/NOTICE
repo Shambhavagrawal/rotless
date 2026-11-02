@@ -26,8 +26,12 @@ Changes made by rotless contributors:
   UTF-8 file encoding (for Windows) and wording that doesn't assume one agent.
 - agents/grader.md, agents/analyzer.md, agents/comparator.md and references/schemas.md: prose
   edited for plain style. Every instruction, field name, schema and example is unchanged.
+- eval-viewer/generate_review.py: the server answers only its own page (an Origin and Host check, so
+  another site can't write feedback.json), and it no longer kills whatever process holds its port.
+- eval-viewer/viewer.html and assets/eval_review.html: system fonts instead of Google Fonts, and
+  the two remaining lines that named Claude Code now say "your agent session".
 - Comments and docstrings in scripts/package_skill.py, scripts/aggregate_benchmark.py,
   eval-viewer/generate_review.py and eval-viewer/viewer.html: edited for plain style, and the
   usage lines corrected. No code changed.
 
-Unchanged from Anthropic's skill-creator: LICENSE.txt and assets/eval_review.html.
+Unchanged from Anthropic's skill-creator: LICENSE.txt.

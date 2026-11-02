@@ -124,7 +124,7 @@
   },
   "updated": {
     "date": "2026-11-02",
-    "note": "freshness reminder in the footer; 0.1.0 work"
+    "note": "L-2026-11-02-16: reminder through keeper.py status, owned skills only; 20-query trigger set"
   },
   "checked": "2026-11-02"
 }

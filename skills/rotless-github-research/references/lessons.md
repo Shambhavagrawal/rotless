@@ -25,3 +25,21 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `hf-papers` in srcsweep.py (Hugging Face paper search; a paper's `githubRepo` goes in `repo`, so `--repos | ghverify.py -` verifies the code behind a paper); SKILL.md and README say 21 sources
 - Check: scripts/test_offline.py L-4 (red on snapshot 20261102-185023, green after); live: "skill evolution" gave 120 papers and repos such as Zhouyaner/Eviskill
 - Why: rotless.json monitored the papers endpoint and sources.md documented it, but `--sources hf-papers` failed with "unknown source"
+
+## L-2026-11-02-5: ghverify reads only GitHub repos
+- From: external code review (Gemini), round 4, 2026-11-02 · verdict: fix
+- Change: Start: `parse_repo` needs github.com in a URL, takes bare owner/repo only when the owner has no dot, and skips GitHub's own pages (`NOT_OWNERS`: topics, orgs, features…) (scripts/ghverify.py)
+- Check: scripts/test_offline.py L-5 (red on snapshot r11-snap, green after)
+- Why: a GitLab repo URL was read as owner "gitlab.com" with the GitLab owner as the repo name, and showed up as a NOT FOUND row
+
+## L-2026-11-02-6: srcsweep --repos keeps repo links only
+- From: external code review (Gemini), round 4, 2026-11-02 · verdict: fix
+- Change: Start: `gh_repo()` takes the first GitHub link whose owner isn't one of GitHub's own pages (scripts/srcsweep.py)
+- Check: scripts/test_offline.py L-6 (red on snapshot r11-snap, green after)
+- Why: registry and Hacker News results link `github.com/topics/…` and `github.com/features/…`, which went to ghverify as fake repos
+
+## L-2026-11-02-7: a slash in the query is escaped
+- From: external code review (Gemini), round 4, 2026-11-02 · verdict: fix
+- Change: Start: `urllib.parse.quote(q, safe="")` in `run_source` (scripts/srcsweep.py)
+- Check: scripts/test_offline.py L-7 (red on snapshot r11-snap, green after)
+- Why: `quote()` keeps "/" by default, so "CI/CD" split the AUR search path and returned 404

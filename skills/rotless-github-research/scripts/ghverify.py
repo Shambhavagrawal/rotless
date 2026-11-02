@@ -64,10 +64,21 @@ NOISE = re.compile(r"(^|[-_.])(tutorial|course|boilerplate|starter|template|demo
                    r"learning|homework|assignment|dotfiles|awesome)([-_.]|$)", re.I)
 
 
+# first path segments on github.com that are GitHub's own pages, not owners
+NOT_OWNERS = {"topics", "orgs", "users", "features", "marketplace", "sponsors", "settings", "search", "apps",
+              "collections", "trending", "enterprise", "about", "pricing", "login", "explore", "notifications",
+              "issues", "pulls", "codespaces", "organizations", "site", "security", "customer-stories", "readme"}
+
+
 def parse_repo(s):
+    """(owner, repo) from owner/repo or a GitHub URL; None for other hosts and GitHub's own pages."""
     s = s.strip().removesuffix(".git").rstrip("/")
-    m = re.search(r"(?:github\.com[/:])?([\w.-]+)/([\w.-]+)", s)
-    return (m.group(1), m.group(2)) if m else None
+    m = re.search(r"github\.com[/:]([\w.-]+)/([\w.-]+)", s, re.I)
+    if not m and not re.search(r"://|@|^[^/]*\.[^/]*/", s):  # a bare owner/repo; GitHub owners have no dots
+        m = re.search(r"([\w-]+)/([\w.-]+)", s)
+    if not m or m.group(1).lower() in NOT_OWNERS:
+        return None
+    return m.group(1), m.group(2).removesuffix(".git")
 
 
 def fetch(batch):

@@ -153,9 +153,9 @@
       "quote": "Claude Code (claude -p)",
       "check": {
         "run": "claude --help",
-        "regex": "--permission-mode[\\s\\S]*--print|--print[\\s\\S]*--permission-mode"
+        "regex": "(?=[\\s\\S]*--permission-mode)(?=[\\s\\S]*--print)(?=[\\s\\S]*--setting-sources)"
       },
-      "why": "harness.py relies on -p and --permission-mode acceptEdits"
+      "why": "harness.py relies on -p, --permission-mode acceptEdits, and --setting-sources project for trigger tests"
     },
     {
       "id": "codex-headless-flags",
@@ -201,7 +201,7 @@
   },
   "updated": {
     "date": "2026-11-02",
-    "note": "freshness reminder in the footer; 0.1.0 work"
+    "note": "L-2026-11-02-20: set_frontmatter keeps block descriptions whole"
   },
   "checked": "2026-11-02"
 }

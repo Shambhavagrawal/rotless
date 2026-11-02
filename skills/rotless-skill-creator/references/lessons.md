@@ -73,3 +73,45 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `make_workspace` renames `*.fixture` files back after copying a case's input files (scripts/harness.py); Step 4 tells authors to name input skills `SKILL.md.fixture`; the refiner's test case and its place-files.sh follow it
 - Check: scripts/test_harness.py L-13 (red on snapshot 20261102-202732, green after); the repo check also fails on any SKILL.md outside skills/<name>/
 - Why: the plugin install copied `evals/.../files/toy-search/SKILL.md`, a sample skill, and tools that scan a repo for SKILL.md files could offer it as one of rotless's skills
+
+## L-2026-11-02-14: a trigger test stops once the skill loads
+- From: external code review (Gemini), round 4, 2026-11-02 · verdict: fix · verdict: optimize
+- Change: Start: with a canary, `make_workspace` replaces the test copy's body with one line: print the token and stop, without tools or the task. Stop: L-8's "even if you can't finish the task" note above the real body (scripts/harness.py)
+- Check: scripts/test_harness.py L-14 (red on snapshot r11-snap, green after); live: `harness.py probe --agent claude` replied with the token alone in 13.8 s
+- Why: agents choose a skill from its name and description, so the body changes nothing being measured; running the whole task took up to 300 s per query and used up the Codex quota
+
+## L-2026-11-02-15: the review server answers only its own page
+- From: external code review (Gemini), round 4, 2026-11-02 · verdict: fix
+- Change: Start: `ReviewHandler._own_page()` requires Host to be 127.0.0.1 or localhost on the server's port, and Origin, when sent, to match; other requests get 403 (eval-viewer/generate_review.py)
+- Check: scripts/test_harness.py L-15 (red on snapshot r11-snap, green after: a POST from another site was answered 200 and wrote feedback.json)
+- Why: any page open in the browser could POST to 127.0.0.1:3117 and put instructions in feedback.json, which the agent reads as the user's review
+
+## L-2026-11-02-16: the viewer never kills another program
+- From: external code review (Gemini), round 4, 2026-11-02 · verdict: fix
+- Change: Stop: `_kill_port()` (lsof + SIGTERM on whatever held the port). Continue: falling back to a free port
+- Check: scripts/test_harness.py L-16 (red on snapshot r11-snap, green after)
+- Why: it could end an unrelated process that happened to use port 3117, and printed a warning on Windows, which has no lsof
+
+## L-2026-11-02-17: run_case sees every change to the input files
+- From: external code review (Gemini), round 4, 2026-11-02 · verdict: fix
+- Change: Start: `snapshot()` keeps (mtime in ns, size); `changes()` returns changed and deleted files; deleted ones go to `deleted-files.txt` beside outputs/ (scripts/run_case.py)
+- Check: scripts/test_harness.py L-17 (red on snapshot r11-snap, green after)
+- Why: a rewrite within the clock's resolution kept the same float mtime and was missed, and deleted files were never reported to the graders
+
+## L-2026-11-02-18: the review pages load no fonts and name no single agent
+- From: external code review (Gemini), round 4, 2026-11-02 · verdict: fix
+- Change: Start: system font stacks in eval-viewer/viewer.html and assets/eval_review.html; "your agent session" in the two lines that said Claude Code; docs/privacy.md names the one remaining load (SheetJS, pinned with a hash)
+- Check: scripts/test_harness.py L-18 (red on snapshot r11-snap, green after); tests/check_repo.py check 8 (every page's external script or stylesheet is in docs/privacy.md)
+- Why: the pages called fonts.googleapis.com on every open, which docs/privacy.md didn't mention, and NOTICE claimed the wording was already agent-neutral
+
+## L-2026-11-02-19: trigger tests on Claude skip the user's own skills
+- From: running the 20-query trigger sets on this machine, 2026-11-02 · verdict: fix
+- Change: Start: `AGENTS["claude"]["isolate"] = ["--setting-sources", "project"]`; `run_eval.py` runs with `isolate=True` and only warns about installed copies on agents without it (scripts/harness.py, scripts/run_eval.py)
+- Check: scripts/test_harness.py L-19 (red on snapshot r11-snap, green after); live: `claude -p --setting-sources project` listed no user-level skills
+- Why: an installed copy with the same description competes with the renamed test copy, and when the agent picks it the run counts as a missed trigger
+
+## L-2026-11-02-20: a block description with blank lines is replaced whole
+- From: external code review (Gemini), round 4, 2026-11-02 · verdict: fix
+- Change: Start: `set_frontmatter` also takes blank lines that are followed by more indented lines of the same value (scripts/harness.py)
+- Check: scripts/test_harness.py L-20 (red on snapshot r11-snap, green after)
+- Why: a `description: |` with two paragraphs kept its second paragraph after the key was replaced, which left broken YAML in the test copy

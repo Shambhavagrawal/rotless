@@ -23,6 +23,7 @@ Differentiator: hook-free capture through a footer inside each owned skill; one 
 | `AMAP-ML/SkillClaw` | adjacent (cautionary) | 2737 | 2026-10-21 | MIT | failure modes: autonomous rewrite, config mutation (#71), path traversal (#68) |
 | `ZainRizvi/git-workflow-guards` | borrowed idea + name collision | 0 | 2026-10-31 | MIT | `skills/ratchet-harness/SKILL.md` guard before fix, rules never silently removed; owns the names ratchet-retro and ratchet-harness |
 | `alibaba/skill-up` | adjacent | 1408 | 2026-10-27 | Apache-2.0 | evaluation + evolution engine; possible optional backend for running refiner checks |
+| `nhunsaker/github-triage-agent-tutorial` | adjacent (other domain) | 4 | 2026-10-25 | none | ideas only, nothing taken: its flywheel chapter (`docs/tutorial/08-build-the-flywheel.md` at cd06fb3) diffs the bot's decision against the human's labels at close, dedups corrections on (issue, dimension), counts bot-to-human pairs and proposes a rule from a cluster of agreeing corrections. The refiner already covers this with field notes, `notes.py stats` hot spots and a check per lesson; notes are free text, so there is no from/to pair to count |
 
 ## Queries
 - `self-improving skills`
@@ -41,4 +42,5 @@ Differentiator: hook-free capture through a footer inside each owned skill; one 
 - Papers: arXiv 2608.12851 "Practice Makes Unsafe: Skill Misevolution" (all 21 agent x method combos wrote unsafe skills; SafeEvolve write+retrieval checks cut harm 21.3% to 4.0%), arXiv 2608.27454 WikiSkill, arXiv 2603.01145 AutoSkill. Abstracts only.
 - Name check: ratchet taken (ratchet-retro, ratchet-harness); kaizen 779 SKILL.md, hone 544, whetstone 22; skill-hone and skill-kaizen 0. Chosen name: rotless-skill-refiner (repo prefix makes it unique).
 - Not deep-read (not verified, listed only): wienerdog-ai/wienerdog, luml-ai/dreamer, Samurai412/autoskill, hao-cyber/skill-evolution, haddock-development/claude-reflect-system, jose-compu/self-improving-skills.
+- Landscape follow-up 2026-11-02: the modernizer's search found nhunsaker/github-triage-agent-tutorial (created 2026-09-01, one author, no license); read README, file tree and chapter 8 at cd06fb3. Cited, nothing borrowed.
 - Unavailable: code search 10/min limit hit once (switched to grep.app).

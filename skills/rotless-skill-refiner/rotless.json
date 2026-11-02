@@ -2,7 +2,7 @@
   "skill": "rotless-skill-refiner",
   "verified": {
     "date": "2026-11-02",
-    "note": "reviewed skill-up e4a41d7: codex transcript fix in their runner, nothing to borrow"
+    "note": "nhunsaker/github-triage-agent-tutorial reviewed: adjacent, cited in prior-art.md, nothing borrowed"
   },
   "deps": [
     {
@@ -165,6 +165,14 @@
       "id": "doc:skill-misevolution",
       "url": "https://arxiv.org/abs/2608.12851",
       "why": "the safety-scan rule cites its finding that every tested skill-evolution method wrote unsafe skills"
+    },
+    {
+      "type": "github-repo",
+      "repo": "nhunsaker/github-triage-agent-tutorial",
+      "role": "adjacent (other domain)",
+      "files": [
+        "docs/tutorial/08-build-the-flywheel.md"
+      ]
     }
   ],
   "claims": [],
@@ -206,7 +214,7 @@
   },
   "updated": {
     "date": "2026-11-02",
-    "note": "freshness reminder in the footer; 0.1.0 work"
+    "note": "footer reminder through keeper.py status (modernizer L-2026-11-02-16); 20-query trigger set"
   },
   "checked": "2026-11-02"
 }

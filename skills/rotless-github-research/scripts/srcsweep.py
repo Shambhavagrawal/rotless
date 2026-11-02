@@ -28,6 +28,17 @@ import urllib.request
 
 UA = "rotless-github-research-skill/1.0"
 GH = re.compile(r"github\.com[/:]([\w.-]+)/([\w.-]+?)(?:\.git)?(?:[/#?\"' ]|$)", re.I)
+NOT_OWNERS = {"topics", "orgs", "users", "features", "marketplace", "sponsors", "settings", "search", "apps",
+              "collections", "trending", "enterprise", "about", "pricing", "login", "explore", "notifications",
+              "issues", "pulls", "codespaces", "organizations", "site", "security", "customer-stories", "readme"}
+
+
+def gh_repo(text):
+    """"owner/repo" from the first GitHub repo link in text; GitHub's own pages (topics, orgs…) don't count."""
+    for m in GH.finditer(text or ""):
+        if m.group(1).lower() not in NOT_OWNERS:
+            return f"{m.group(1)}/{m.group(2)}"
+    return None
 
 
 def get(url, headers=None):
@@ -180,7 +191,7 @@ def run_source(name, q, n):
     err = "unknown error"
     for attempt in (1, 2):
         try:
-            return name, SOURCES[name](urllib.parse.quote(q), n), None
+            return name, SOURCES[name](urllib.parse.quote(q, safe=""), n), None  # "CI/CD" must not split a path
         except Exception as e:  # network, HTTP, shape changes: report as not reached, never crash the sweep
             err = f"HTTP {e.code}" if isinstance(e, urllib.error.HTTPError) else f"{type(e).__name__}: {str(e)[:50]}"
             if attempt == 1 and isinstance(e, urllib.error.HTTPError) and e.code not in (429, 500, 502, 503, 504):
@@ -212,9 +223,9 @@ def main():
         seen = []
         for total, items in ok.values():
             for it in items:
-                m = GH.search(it["repo"] or "") or GH.search(it["url"] or "")
-                if m and f"{m.group(1)}/{m.group(2)}" not in seen:
-                    seen.append(f"{m.group(1)}/{m.group(2)}")
+                r = gh_repo(it["repo"]) or gh_repo(it["url"])
+                if r and r not in seen:
+                    seen.append(r)
         print("\n".join(seen))
         return
     if args.json:

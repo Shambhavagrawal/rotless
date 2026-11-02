@@ -80,7 +80,29 @@ rows = json.loads(buf.getvalue())
 if not rows or rows[0].get("noise") is not True:
     fails.append(f"L-3: --json rows need a noise flag (got keys {sorted(rows[0]) if rows else []})")
 
+# L-5: ghverify reads only GitHub repos from a URL; other hosts and GitHub's own pages are skipped
+want = {"owner/repo": ("owner", "repo"), "https://github.com/o/r.git": ("o", "r"), "git@github.com:o/r.git": ("o", "r"),
+        "https://github.com/o/r/blob/main/x.py": ("o", "r"), "https://gitlab.com/owner/repo": None,
+        "https://huggingface.co/spaces/foo/bar": None, "gitlab.com/owner/repo": None,
+        "https://github.com/topics/mcp": None, "https://github.com/orgs/anthropics": None}
+got5 = {s: ghverify.parse_repo(s) for s in want}
+if got5 != want:
+    fails.append(f"L-5: parse_repo got {[(s, g) for s, g in got5.items() if g != want[s]]}")
+
+# L-6: srcsweep --repos skips GitHub pages that aren't repos (topics, orgs, features…)
+gr6 = getattr(srcsweep, "gh_repo", None)
+if not gr6 or gr6("see https://github.com/topics/mcp") or gr6("https://github.com/features/copilot") \
+        or gr6("https://github.com/anthropics/skills/tree/main") != "anthropics/skills":
+    fails.append("L-6: srcsweep.gh_repo must keep owner/repo links and drop topics, orgs and feature pages")
+
+# L-7: a query with a slash is fully escaped, so path-style endpoints (AUR) don't 404
+urls = []
+srcsweep.get = lambda url, headers=None: urls.append(url) or {"resultcount": 0, "results": []}
+srcsweep.run_source("aur", "CI/CD", 3)
+if not urls or not urls[0].endswith("/search/CI%2FCD"):
+    fails.append(f"L-7: a slash in the query must be escaped (asked for {urls[:1]})")
+
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("ok: 4 research-script lessons hold")
+print("ok: 7 research-script lessons hold")

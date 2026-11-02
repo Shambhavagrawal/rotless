@@ -10,7 +10,8 @@ and publish from this repo. Standard library only.
 
 Only the skills already in this repo's skills/ are copied, without caches, test workspaces or drafts.
 Text files are stored with LF line endings, as .gitattributes asks. It refuses to run when skills/ has
-uncommitted changes, because the copy would overwrite them.
+uncommitted changes, because the copy would overwrite them, and when a source skill lacks a folder the repo's copy
+has (a skill installed from a .skill package has no evals/), because the copy would delete that folder.
 """
 import argparse
 import filecmp
@@ -31,6 +32,11 @@ def same(a, b):
     if a.suffix in TEXT:
         x, y = x.replace(CRLF, LF), y.replace(CRLF, LF)
     return x == y
+
+
+def lost_folders(src, dst):
+    """Top-level folders the repo's copy of a skill has and the source doesn't."""
+    return sorted(p.name for p in dst.iterdir() if p.is_dir() and p.name != "__pycache__" and not (src / p.name).is_dir())
 
 
 def changes(src, dst):
@@ -60,6 +66,13 @@ def main():
     dirty = subprocess.run(["git", "status", "--porcelain", "--", "skills"], cwd=ROOT, capture_output=True, text=True).stdout
     if dirty.strip() and not a.dry_run:
         sys.exit("skills/ has uncommitted changes; commit or stash them first:\n" + dirty)
+
+    lost = {n: lost_folders(src_root / n, ROOT / "skills" / n) for n in names}
+    lost = {n: v for n, v in lost.items() if v}
+    if lost:
+        sys.exit("refusing to copy: the source is missing folders the repo has, and the copy would delete them\n"
+                 + "\n".join(f"  {n}: {', '.join(v)}" for n, v in lost.items())
+                 + "\nA skill installed from a .skill package has no evals/; copy from your working folder instead.")
 
     total = 0
     for n in names:

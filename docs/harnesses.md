@@ -34,6 +34,7 @@ What has been run, with which version. Add a row when you verify something new, 
 | 2026-11-02 | Claude Code 2.1.316 | `claude plugin validate` on this repo | passed |
 | 2026-11-02 | codex-cli 0.154.0 | `harness.py probe` | passed |
 | 2026-11-02 | codex-cli 0.166.0 | probe; a behaviour test case with and without rotless-skill-refiner (`run_case.py`); the refiner's trigger tests (`run_eval.py`); installing the plugin from this repo | passed. The test runs found four bugs in the runners, now fixed (rotless-skill-creator lessons 2 to 5); the trigger tests' second run stopped at the Codex usage limit |
+| 2026-11-02 | Claude Code 2.1.316 | trigger tests (`run_eval.py`), 20 queries per skill (10 should trigger, 10 near misses), 3 runs each, with your own skills left out (`--setting-sources project`) | 79 of 80 right. rotless-github-research, rotless-skill-modernizer and rotless-skill-refiner 20/20 with no false triggers; rotless-skill-creator 19/20, missing "here's my SKILL.md for invoice-ocr, write test cases for it…" (0 of 3 runs). About 4 minutes per skill with 6 runs at a time |
 | 2026-11-02 | GitHub Copilot CLI 0.0.382 | `harness.py probe` | failed: exit 1 with no output. Not retried with an allow-everything flag, by design |
 | 2026-11-02 | Gemini CLI | not run | the local install was broken |
 
@@ -85,4 +86,4 @@ The modernizer and refiner keep their state outside the install folder, because 
 ## Known limits
 
 - Test runs that create files need a write mode limited to the run's workspace. Today only Claude Code (`--permission-mode acceptEdits`) and Codex (`-s workspace-write`) have one. On other agents, run those cases with subagents or in the session; rotless never uses an allow-everything flag.
-- How reliably each skill's description triggers has not been measured yet. The test sets are in each skill's `evals/trigger-eval.json`.
+- Triggering has been measured on Claude Code only (see the test record). On other agents, a copy of the skill you've installed yourself can answer in place of the test copy, which counts as a missed trigger; `run_eval.py` warns when it finds one. On Claude Code, trigger tests pass `--setting-sources project` to leave your own skills out.

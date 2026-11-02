@@ -6,5 +6,17 @@
  {"query": "create a GitHub Action that runs our pytest suite on every pull request", "should_trigger": false},
  {"query": "can you check my skills, I haven't looked at them in a month", "should_trigger": false},
  {"query": "ugh, my pdf-invoices skill mangled the tables again, make sure it stops happening", "should_trigger": false},
- {"query": "write a python function that parses dates like 03/11/2026 and 2026-11-03", "should_trigger": false}
+ {"query": "write a python function that parses dates like 03/11/2026 and 2026-11-03", "should_trigger": false},
+ {"query": "make me a skill that writes our weekly investor update from the metrics sheet, it has to work in gemini cli too", "should_trigger": true},
+ {"query": "here's my SKILL.md for invoice-ocr, write test cases for it and run them against no skill so I can see if it helps", "should_trigger": true},
+ {"query": "package my standup-summary skill so my teammate can install it", "should_trigger": true},
+ {"query": "the description on my k8s-debug skill is too vague, it fires on every kubernetes question. tune it", "should_trigger": true},
+ {"query": "I keep pasting the same 12-step release checklist into chat, can you make that a reusable skill", "should_trigger": true},
+ {"query": "scaffold a new agent skill called csv-cleaner with a scripts folder, and validate it", "should_trigger": true},
+ {"query": "write a bash script that backs up my postgres db every night", "should_trigger": false},
+ {"query": "is my github-scraper skill still accurate? gh just released a new version and I think some flags changed", "should_trigger": false},
+ {"query": "find me existing open source skills for writing changelogs before I decide anything", "should_trigger": false},
+ {"query": "add a --version flag to my python CLI tool", "should_trigger": false},
+ {"query": "explain the difference between an agent skill and an MCP server", "should_trigger": false},
+ {"query": "set up a pre-commit hook that runs ruff on staged files", "should_trigger": false}
 ]

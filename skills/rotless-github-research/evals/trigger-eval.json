@@ -6,5 +6,17 @@
  {"query": "search this codebase for where we parse invoice dates, I think it's somewhere under src/billing", "should_trigger": false},
  {"query": "how do I open a pull request from the terminal with gh", "should_trigger": false},
  {"query": "what's new in the latest react release", "should_trigger": false},
- {"query": "can you check my skills, I haven't looked at them in a month", "should_trigger": false}
+ {"query": "can you check my skills, I haven't looked at them in a month", "should_trigger": false},
+ {"query": "before I write my own markdown-to-confluence converter, check whether something good already exists and what I could reuse from it", "should_trigger": true},
+ {"query": "who else has built an MCP server for Zerodha Kite? compare the ones that still get commits", "should_trigger": true},
+ {"query": "is github.com/microsoft/markitdown actually healthy? look at the open issues and how fast they get fixed", "should_trigger": true},
+ {"query": "prior art check: agent skills that learn from user corrections. I need a list of repos and what each one does", "should_trigger": true},
+ {"query": "any open source libs for parsing indian bank statement PDFs? HDFC and ICICI formats mainly", "should_trigger": true},
+ {"query": "i want to build a whatsapp bot for temple announcements, has someone done this already on github", "should_trigger": true},
+ {"query": "clone github.com/pallets/flask and run its test suite locally", "should_trigger": false},
+ {"query": "find every TODO comment in this repo and list them by file", "should_trigger": false},
+ {"query": "summarise the open issues on our own repo acme/billing and tell me which ones are bugs", "should_trigger": false},
+ {"query": "what does the --depth flag do in git clone", "should_trigger": false},
+ {"query": "compare pandas and polars for reading a 2GB csv, which one is faster", "should_trigger": false},
+ {"query": "write a README for my repo that explains how to install it", "should_trigger": false}
 ]

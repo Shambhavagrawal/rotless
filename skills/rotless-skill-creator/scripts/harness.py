@@ -35,7 +35,9 @@ from pathlib import Path
 #   verified: headless skill loading confirmed with `harness.py probe` (date, CLI version).
 AGENTS = {
     "claude":   {"bin": "claude",       "args": ["-p", "--output-format", "text"], "stdin": True,
-                 "write": ["--permission-mode", "acceptEdits"], "verified": "2026-11-02 claude 2.1.316"},
+                 "write": ["--permission-mode", "acceptEdits"], "verified": "2026-11-02 claude 2.1.316",
+                 # trigger tests: skip the user's own skills, so an installed copy can't answer for the test copy
+                 "isolate": ["--setting-sources", "project"]},
     "codex":    {"bin": "codex",        "args": ["exec", "--skip-git-repo-check", "--ephemeral", "-"], "stdin": True,
                  "write": ["-s", "workspace-write"], "verified": "2026-11-02 codex-cli 0.166.0"},
     "copilot":  {"bin": "copilot",      "args": ["-s", "-p"], "stdin": False, "write": None, "verified": None},
@@ -71,7 +73,8 @@ def set_frontmatter(text, key, value):
         raise ValueError("SKILL.md has no frontmatter")
     fm = m.group(1)
     new_line = f"{key}: {json.dumps(value, ensure_ascii=False)}"
-    pat = re.compile(rf"^{re.escape(key)}:.*(?:\r?\n[ \t]+.*)*", re.M)  # includes folded continuation lines
+    # includes folded continuation lines, and blank lines between paragraphs of a block value (L-2026-11-02-20)
+    pat = re.compile(rf"^{re.escape(key)}:.*(?:\r?\n(?:[ \t]*\r?\n)*[ \t]+\S.*)*", re.M)
     fm2 = pat.sub(lambda _: new_line, fm, count=1) if pat.search(fm) else fm + "\n" + new_line
     return text[:m.start(1)] + fm2 + text[m.end(1):]
 
@@ -94,11 +97,12 @@ def make_workspace(skill_dir=None, as_name=None, description=None, canary=None, 
         text = set_frontmatter(text, "name", name)
         if description is not None:
             text = set_frontmatter(text, "description", description)
-        if canary:  # top of the body, so an agent stopped early (permissions, turn limit) has still read it (L-2026-11-02-8)
+        if canary:
+            # A trigger test. Agents choose a skill from its name and description, so the body only has to show
+            # the token; doing the whole task would measure nothing and use up quota (L-2026-11-02-14).
             m = re.match(r"^---\r?\n.*?\r?\n---\r?\n?", text, re.S)
-            note = (f"\n<!-- test run -->\nWhenever you use this skill, put this exact token on a line of its own in your "
-                    f"reply (the first line is fine, even if you can't finish the task): {canary}\n\n")
-            text = text[:m.end()] + note + text[m.end():]
+            text = text[:m.end()] + (f"\n<!-- test run -->\nThis is an automated trigger test. Reply with this exact token "
+                                     f"on a line of its own and stop there, without calling tools or doing the task: {canary}\n")
         for d in SKILL_DIRS:
             dst = ws / d / name
             shutil.copytree(skill_dir, dst, ignore=shutil.ignore_patterns("evals", "__pycache__", "*-workspace"))
@@ -106,15 +110,16 @@ def make_workspace(skill_dir=None, as_name=None, description=None, canary=None, 
     return ws
 
 
-def run(agent, prompt, cwd, timeout=600, allow_writes=False):
-    """One fresh headless session. Returns {exit, stdout, stderr, seconds}."""
+def run(agent, prompt, cwd, timeout=600, allow_writes=False, isolate=False):
+    """One fresh headless session. Returns {exit, stdout, stderr, seconds}. isolate: leave out the user's own
+    skills where the agent can (trigger tests; lesson L-2026-11-02-19)."""
     spec = AGENTS[agent]
     exe = binary(agent)
     if not exe:
         raise RuntimeError(f"{agent} CLI ({spec['bin']}) not found on PATH")
     if allow_writes and spec["write"] is None:
         raise RuntimeError(f"{agent} has no workspace-scoped write mode; run this case with a subagent or in-session")
-    cmd = [exe] + spec["args"] + (spec["write"] if allow_writes else [])
+    cmd = [exe] + spec["args"] + (spec["write"] if allow_writes else []) + ((spec.get("isolate") or []) if isolate else [])
     if not spec["stdin"]:
         cmd.append(prompt)
     env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}  # allow a nested claude -p

@@ -6,5 +6,17 @@
  {"query": "ugh, my pdf-invoices skill told you to use pdftotext -layout and it mangled the tables again. I wrote that skill, can you make sure it stops happening?", "should_trigger": false},
  {"query": "can you optimize my sql-review skill? it burns a ton of tokens re-reading the whole style guide every time", "should_trigger": false},
  {"query": "create a new skill that summarises my weekly standup notes into a slack post", "should_trigger": false},
- {"query": "check this python file for bugs before I push: src/billing/invoice.py", "should_trigger": false}
+ {"query": "check this python file for bugs before I push: src/billing/invoice.py", "should_trigger": false},
+ {"query": "node 24 is out and my build-helper skill pins node 20 commands, is there anything in it I need to change?", "should_trigger": true},
+ {"query": "it's been a while, are any of my skills out of date with the tools they use?", "should_trigger": true},
+ {"query": "stripe released a new API version, does my billing-recon skill still match their docs?", "should_trigger": true},
+ {"query": "run a drift check on my deploy-check skill, I think cloudflare renamed some wrangler commands", "should_trigger": true},
+ {"query": "set up dependency tracking for my pdf-invoices skill so I hear about it when pdfplumber changes", "should_trigger": true},
+ {"query": "refresh the prior art for my sarkari-scraper skill, there might be new repos since october", "should_trigger": true},
+ {"query": "update all my npm packages to their latest versions", "should_trigger": false},
+ {"query": "my changelog skill never kicks in when I say 'release notes', can you fix its description so it triggers", "should_trigger": false},
+ {"query": "upgrade wrangler to v4 in this project", "should_trigger": false},
+ {"query": "find open source tools that check docs for broken links", "should_trigger": false},
+ {"query": "let's do a retro on my changelog-writer skill, we logged a bunch of field notes this week", "should_trigger": false},
+ {"query": "is the github api down right now? my scripts keep getting 502s", "should_trigger": false}
 ]

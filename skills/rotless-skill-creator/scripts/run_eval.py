@@ -45,7 +45,7 @@ def one_run(agent, skill, as_name, description, query, timeout):
     canary = harness.new_canary()
     ws = harness.make_workspace(skill, as_name=as_name, description=description, canary=canary)
     try:
-        r = harness.run(agent, query, ws, timeout)
+        r = harness.run(agent, query, ws, timeout, isolate=True)
     finally:
         shutil.rmtree(ws, ignore_errors=True)
     out = {"triggered": harness.saw_canary(canary, r["stdout"]), "exit": r["exit"], "seconds": r["seconds"]}
@@ -100,7 +100,7 @@ def main():
     train, test = split(items, a.holdout, a.seed)
     as_name = f"{name}-eval-{uuid.uuid4().hex[:6]}"  # unique, so an installed copy can't be mistaken for it
 
-    for p in harness.installed_copies(name):
+    for p in ([] if harness.AGENTS[a.agent].get("isolate") else harness.installed_copies(name)):
         print(f"[warn] {name} is also installed at {p}; the agent may load that copy instead, "
               "which shows up as a missed trigger", file=sys.stderr)
 

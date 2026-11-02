@@ -94,3 +94,9 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `rotless.json` records `updated` (new `keeper.py updated` command; `init` sets it) and `checked` (a clean `check` sets it); `freshness()` uses `remindAfterDays`, 15 by default; `status` and `list` name skills that are due; the field-notes footer asks the agent to offer a check at the end of a task when its skill is due
 - Check: scripts/test_keeper.py L-15 (red on snapshot 20261102-212306, green after)
 - Why: checks run only on demand, and nothing reminded anyone to ask; `status` only knew the last check run and used a fixed 7 days
+
+## L-2026-11-02-16: only skills you own remind you
+- From: external code review (Gemini), round 4, 2026-11-02 · verdict: fix
+- Change: Start: the field-notes footer (every rotless skill, both templates) runs `keeper.py status` once per session and offers a check only when `status` lists the skill as due, and never in a reply that must stay machine-readable. Stop: reading `rotless.json` and comparing dates after every task
+- Check: tests/check_repo.py check 7 (fails while any footer lacks `keeper.py status`; red on the old footers, green after)
+- Why: `status` already lists only owned skills, but the footer didn't use it, so 15 days after install everyone would be asked to modernize rotless's own skills, which the modernizer then refuses; it also cost a file read after every task

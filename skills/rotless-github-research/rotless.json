@@ -372,7 +372,7 @@
   },
   "updated": {
     "date": "2026-11-02",
-    "note": "freshness reminder in the footer; 0.1.0 work"
+    "note": "review fixes L-2026-11-02-5..7: parse_repo, gh_repo, escaped slash; 20-query trigger set"
   },
   "checked": "2026-11-02"
 }

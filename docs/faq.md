@@ -14,7 +14,7 @@ Yes. When the others are installed, each hands off to them; when they aren't, it
 
 ## When should I run the modernizer?
 
-Whenever you like: after upgrading a tool a skill uses, or when you notice something changed. Nothing runs on a schedule. You don't have to keep track, though: each skill built with rotless records when it was last updated and checked, and once that's more than 15 days ago (adjustable per skill with `remindAfterDays` in its `rotless.json`) it offers a check at the end of a task.
+Whenever you like: after upgrading a tool a skill uses, or when you notice something changed. Nothing runs on a schedule. You don't have to keep track, though: each skill built with rotless records when it was last updated and checked, and once that's more than 15 days ago (adjustable per skill with `remindAfterDays` in its `rotless.json`) it offers a check at the end of a task, once per session. Only skills you own do this: rotless's own skills, and any others you installed, stay quiet.
 
 ## Does anything leave my machine?
 

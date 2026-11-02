@@ -33,8 +33,14 @@ def snapshot(ws):
     # skip only the installed skill copies; anything else under .agents/, .claude/… (e.g. a notes
     # registry next to the skills folder) is evidence the graders need. Lesson L-2026-11-02-4.
     skip = {Path(d).parts for d in harness.SKILL_DIRS}
-    return {p.relative_to(ws): p.stat().st_mtime for p in ws.rglob("*")
+    # size too, and nanoseconds: a rewrite within the clock's resolution keeps the same mtime (L-2026-11-02-17)
+    return {p.relative_to(ws): (p.stat().st_mtime_ns, p.stat().st_size) for p in ws.rglob("*")
             if p.is_file() and p.relative_to(ws).parts[:2] not in skip}
+
+
+def changes(before, after):
+    """(changed or new files, deleted files), as sorted relative paths."""
+    return sorted(p for p in after if before.get(p) != after[p]), sorted(set(before) - set(after))
 
 
 def main():
@@ -60,11 +66,13 @@ def main():
         outputs = out / "outputs"
         outputs.mkdir(parents=True, exist_ok=True)
         (outputs / "response.md").write_text(r["stdout"], encoding="utf-8")
-        for rel, mtime in snapshot(ws).items():
-            if before.get(rel) != mtime:
-                dst = outputs / rel
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(ws / rel, dst)
+        changed, deleted = changes(before, snapshot(ws))
+        for rel in changed:
+            dst = outputs / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ws / rel, dst)
+        if deleted:  # graders need to see what the agent removed, too
+            (out / "deleted-files.txt").write_text("\n".join(p.as_posix() for p in deleted) + "\n", encoding="utf-8")
         # tokens aren't reported the same way by every CLI, so they stay null here
         (out / "timing.json").write_text(json.dumps({"total_tokens": None, "duration_ms": int(r["seconds"] * 1000),
                                                      "total_duration_seconds": r["seconds"], "agent": a.agent,

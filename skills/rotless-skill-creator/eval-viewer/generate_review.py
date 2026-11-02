@@ -19,10 +19,7 @@ import json
 import mimetypes
 import os
 import re
-import signal
-import subprocess
 import sys
-import time
 import webbrowser
 from functools import partial
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -404,26 +401,6 @@ def generate_html(
 
 # HTTP server (standard library only)
 
-def _kill_port(port: int) -> None:
-    """Kill any process listening on the given port."""
-    try:
-        result = subprocess.run(
-            ["lsof", "-ti", f":{port}"],
-            capture_output=True, text=True, timeout=5,
-        )
-        for pid_str in result.stdout.strip().split("\n"):
-            if pid_str.strip():
-                try:
-                    os.kill(int(pid_str.strip()), signal.SIGTERM)
-                except (ProcessLookupError, ValueError):
-                    pass
-        if result.stdout.strip():
-            time.sleep(0.5)
-    except subprocess.TimeoutExpired:
-        pass
-    except FileNotFoundError:
-        print("Note: lsof not found, cannot check if port is in use", file=sys.stderr)
-
 class ReviewHandler(BaseHTTPRequestHandler):
     """Serves the review HTML and handles feedback saves.
 
@@ -448,7 +425,18 @@ class ReviewHandler(BaseHTTPRequestHandler):
         self.benchmark_path = benchmark_path
         super().__init__(*args, **kwargs)
 
+    def _own_page(self) -> bool:
+        """True for requests from the viewer's own page or a local tool. Another site's page can send a POST here too,
+        and DNS rebinding can make its Host look local, so both headers must name this server (L-2026-11-02-15)."""
+        port = self.server.server_address[1]
+        own = {f"http://127.0.0.1:{port}", f"http://localhost:{port}"}
+        origin = self.headers.get("Origin")
+        return f"http://{self.headers.get('Host', '')}" in own and (origin is None or origin in own)
+
     def do_GET(self) -> None:
+        if not self._own_page():
+            self.send_error(403)
+            return
         if self.path == "/" or self.path == "/index.html":
             # Regenerate HTML on each request (re-scans workspace for new outputs)
             runs = find_runs(self.workspace)
@@ -478,6 +466,9 @@ class ReviewHandler(BaseHTTPRequestHandler):
             self.send_error(404)
 
     def do_POST(self) -> None:
+        if not self._own_page():
+            self.send_error(403)
+            return
         if self.path == "/api/feedback":
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length)
@@ -566,14 +557,12 @@ def main() -> None:
         print(f"\n  Static viewer written to: {args.static}\n")
         sys.exit(0)
 
-    # Kill any existing process on the target port
     port = args.port
-    _kill_port(port)
     handler = partial(ReviewHandler, workspace, skill_name, feedback_path, previous, benchmark_path)
     try:
         server = HTTPServer(("127.0.0.1", port), handler)
     except OSError:
-        # The port is still in use after the kill attempt, so find a free one
+        # the port is taken (perhaps by another program, which is left alone), so use a free one
         server = HTTPServer(("127.0.0.1", 0), handler)
         port = server.server_address[1]
 

@@ -13,6 +13,8 @@ Nothing runs in the background. Every network call happens because you asked for
 | rotless-skill-modernizer | the GitHub API, and the URLs, registries and CLIs listed in a skill's `rotless.json` | requests those checks need |
 | rotless-skill-refiner | nothing; it reads and writes local files | |
 
+rotless-skill-creator's review pages use your system fonts. The results viewer loads one file from the web, the SheetJS library from cdn.sheetjs.com (one pinned version, checked against its hash), to show spreadsheet outputs. Your browser fetches it when you open the page, and your results stay on your machine. The local review server answers only requests from its own page, so another website open in your browser can't write to your feedback file.
+
 Test runs are real agent sessions on your account, so they use your quota. The research skill's rules tell the agent never to put your private repo names, tokens or file contents into a search, and to leave private repos out of its reports.
 
 ## What is stored

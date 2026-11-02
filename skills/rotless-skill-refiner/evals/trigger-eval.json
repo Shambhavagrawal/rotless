@@ -8,5 +8,15 @@
  {"query": "is my github-scraper skill still accurate? gh just released a new version and I think some flags changed", "should_trigger": false},
  {"query": "I upgraded wrangler to v4 this morning, did that break any of my skills?", "should_trigger": false},
  {"query": "write a retrospective doc for our sprint 42, the team missed two deadlines and the deploy broke twice", "should_trigger": false},
- {"query": "optimize this sql query, it takes 12 seconds on the orders table: SELECT * FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'open'", "should_trigger": false}
+ {"query": "optimize this sql query, it takes 12 seconds on the orders table: SELECT * FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'open'", "should_trigger": false},
+ {"query": "you did it again: my commit-message skill keeps adding emoji even though I said no emoji. fix the skill so it sticks", "should_trigger": true},
+ {"query": "note for my scraper skill: the instagram step always times out. log it and we'll fix it later", "should_trigger": true},
+ {"query": "review my pdf-invoices skill based on how it went today, three runs failed on scanned pages", "should_trigger": true},
+ {"query": "my test-writer skill works but it's slow, find where it wastes time and trim it", "should_trigger": true},
+ {"query": "I keep telling my meeting-notes skill to keep summaries under 200 words, make that part of the skill", "should_trigger": true},
+ {"query": "can you check my skills, I haven't looked at them in a month", "should_trigger": false},
+ {"query": "make this react component render faster, it re-renders on every keystroke", "should_trigger": false},
+ {"query": "turn what we just did into a skill so I don't have to explain these deploy steps every time", "should_trigger": false},
+ {"query": "write a post-mortem for yesterday's outage, the database ran out of connections", "should_trigger": false},
+ {"query": "refine this cover letter so it sounds less stiff", "should_trigger": false}
 ]
