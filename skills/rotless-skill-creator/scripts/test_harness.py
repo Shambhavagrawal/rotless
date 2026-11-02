@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lesson checks for rotless-skill-creator's runners (lessons L-2026-11-02-2..4).
+"""Lesson checks for rotless-skill-creator's scripts (lessons L-2026-11-02-2 to L-2026-11-02-13 in references/lessons.md).
 
   python scripts/test_harness.py [skill-dir]     # default: this skill; pass a snapshot to see it fail
 
@@ -157,6 +157,16 @@ try:
 except Exception as e:
     fails.append(f"L-12: {type(e).__name__}: {e}")
 
+# L-13: an input file that is itself a skill ships as SKILL.md.fixture (so tools scanning the repo for skills
+# don't list it) and gets its real name back in the run's workspace
+fx = tmp6 / "fixture-files"
+(fx / "toy-search").mkdir(parents=True)
+(fx / "toy-search" / "SKILL.md.fixture").write_text("---\nname: toy-search\ndescription: x\n---\n", encoding="utf-8")
+ws13 = harness.make_workspace(files_dir=fx)
+if not (ws13 / "toy-search" / "SKILL.md").is_file() or (ws13 / "toy-search" / "SKILL.md.fixture").exists():
+    fails.append("L-13: make_workspace must restore SKILL.md.fixture to SKILL.md")
+shutil.rmtree(ws13, ignore_errors=True)
+
 shutil.rmtree(tmp6, ignore_errors=True)
 
 shutil.rmtree(src.parent, ignore_errors=True)
@@ -164,4 +174,4 @@ shutil.rmtree(ws, ignore_errors=True)
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("ok: 11 creator lessons hold")
+print("ok: 12 creator lessons hold")

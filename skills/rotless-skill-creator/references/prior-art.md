@@ -2,7 +2,7 @@
 _date: 2026-11-02 · verdict: Fork & adapt anthropics/skills skill-creator (Apache-2.0) behind a per-agent runner adapter; blend in superpowers' RED gate and spec validation_
 
 ## Verdict
-Fork & adapt: Anthropic's skill-creator has the best method (interview → draft → with/without-skill runs → grading → viewer → description loop) and is Apache-2.0, so a fork is allowed if we keep its LICENSE, add a NOTICE and mark changed files. Its runners are Claude-only (`claude -p`, `.claude/commands`, `select` on pipes that breaks on Windows).
+Fork & adapt: Anthropic's skill-creator has the best method (an interview, a draft, runs with and without the skill, grading, a review viewer, then the description loop) and is Apache-2.0, so a fork is allowed if we keep its LICENSE, add a NOTICE and mark changed files. Its runners are Claude-only (`claude -p`, `.claude/commands`, `select` on pipes that breaks on Windows).
 Borrow: superpowers' RED gate ("no skill without a failing test first") and "match the form to the failure"; antongulin's port pattern (one headless call per agent, parse its skill-load events); skills-ref's spec rules, reimplemented in stdlib; SkillForge's static trigger lint as the fallback for agents without a headless CLI.
 Gap (verified across the routes below): no trigger evaluator works across agents, nothing lints a skill for Claude-only frontmatter, nothing makes a new skill carry a usage-feedback footer for later refining.
 Fallback: if a fork is unwanted, write a clean-room creator modelled on openai/skills' simpler 6-step creator plus superpowers' method.

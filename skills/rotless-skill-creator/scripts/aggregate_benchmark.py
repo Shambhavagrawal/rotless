@@ -240,7 +240,7 @@ def load_run_results(benchmark_dir: Path) -> dict:
                 result["tool_calls"] = metrics.get("total_tool_calls", 0)
                 result["errors"] = metrics.get("errors_encountered", 0)
 
-                # Extract expectations — viewer requires fields: text, passed, evidence
+                # Extract expectations; the viewer needs the fields text, passed and evidence
                 raw_expectations = grading.get("expectations", [])
                 for exp in raw_expectations:
                     if not isinstance(exp, dict) or "text" not in exp or "passed" not in exp:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Executable canaries for the rotless-github-research skill: does everything SKILL.md claims still hold?
+"""Executable canaries that test whether what rotless-github-research's SKILL.md claims still holds.
 
 Each check is one claim from SKILL.md or one dependency of the scripts. Statuses:
   PASS     claim holds

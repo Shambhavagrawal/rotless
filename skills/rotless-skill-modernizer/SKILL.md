@@ -9,7 +9,7 @@ This skill is for skill authors. A skill someone else wrote belongs to its autho
 
 The engine is `K="<this skill's base directory>/scripts/keeper.py"`, where the base directory is the folder containing this SKILL.md (Claude Code prints it as "Base directory for this skill: …"). Invoke a command as `/rotless-skill-modernizer check …` in Claude Code, `$rotless-skill-modernizer check …` in Codex, or by asking for it by name in any other agent. It needs stdlib Python and `gh`; use `python` on Windows. It finds skills in the folder it's installed in, every agent's user skills folder (`~/.claude/skills`, `~/.agents/skills`, `~/.codex/skills`…), the project's `./.claude/skills` and `./.agents/skills`, and `$SKILL_ROOTS`. State lives in a local git repo that is never pushed: `skill-registry/` next to your skills folder if one exists there, otherwise `~/.skill-registry` (or `$SKILL_REGISTRY`). It never lives in the install folder, which a plugin update would wipe. The design is in `references/DESIGN.md`.
 
-The rotless family has four skills. Each works alone and hands off to the others when they're installed:
+The rotless family has four skills. Each works alone and hands off to the others when they're installed, using the copies next to this skill's folder (never another install or an older plugin-cache version):
 
 | Skill | Role | How this skill uses it |
 |---|---|---|
@@ -109,7 +109,7 @@ The Not tracked section must come back empty.
 
 Statuses:
 - **FAIL:** something the skill relies on is gone or broken.
-- **CHANGED:** the world moved: a new release since `tested`, a renamed or archived repo, a claim that's no longer true, a changed doc page, or a skill-creator step we cite that was renamed.
+- **CHANGED:** something outside the skill changed, such as a new release since `tested`, a renamed or archived repo, a claim that's no longer true, a changed doc page, or a renamed skill-creator step that we cite.
 - **LEARN:** a cited repo has meaningful new commits since you last reviewed it, or a file we borrowed from changed. The report lists their headlines and a diff link. Trivial commits (deps, chore, merge, typo) are acknowledged automatically. A LEARN item stays until you `ack` it.
 - **GAP:** the text references something the manifest doesn't track.
 - **NEW:** a repo appeared in the skill's landscape.

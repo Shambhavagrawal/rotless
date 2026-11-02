@@ -1,0 +1,11 @@
+{
+  "name": "rotless",
+  "version": "0.1.0",
+  "description": "Four agent skills for writing skills that stay accurate: research prior art, build and test a skill, check what it relies on for drift, and turn lessons from real use into small edits that each come with a check.",
+  "author": {
+    "name": "Shambhav Agrawal"
+  },
+  "homepage": "https://github.com/Shambhavagrawal/rotless",
+  "repository": "https://github.com/Shambhavagrawal/rotless",
+  "license": "MIT AND Apache-2.0"
+}

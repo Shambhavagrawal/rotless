@@ -1,0 +1,6 @@
+interface:
+  display_name: "Rotless refiner"
+  short_description: "Improve skills from real use"
+  icon_small: "./assets/icon.svg"
+  icon_large: "./assets/icon.svg"
+  brand_color: "#34D399"

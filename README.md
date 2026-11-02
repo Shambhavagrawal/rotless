@@ -1,10 +1,21 @@
-# rotless
+<p align="center"><img src="assets/icon.svg" width="96" height="96" alt="rotless"></p>
 
-[![selftest](https://github.com/Shambhavagrawal/rotless/actions/workflows/selftest.yml/badge.svg)](https://github.com/Shambhavagrawal/rotless/actions/workflows/selftest.yml)
+<h1 align="center">rotless</h1>
+
+<p align="center">Agent skills that stay accurate and get better with use.</p>
+
+<p align="center">
+  <a href="#install">Install</a> &ensp;·&ensp;
+  <a href="#quickstart">Quickstart</a> &ensp;·&ensp;
+  <a href="docs/harnesses.md">Agents</a> &ensp;·&ensp;
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
+
+<p align="center"><a href="https://github.com/Shambhavagrawal/rotless/actions/workflows/selftest.yml"><img src="https://github.com/Shambhavagrawal/rotless/actions/workflows/selftest.yml/badge.svg" alt="selftest"></a></p>
 
 Agent skills rot. A skill says "`gh search code` allows 10 requests a minute", "call this endpoint", "use this flag". Then the CLI ships a new version, the API changes shape, a step stops working, and the skill keeps telling your agent things that are no longer true. Whatever you learn while using a skill, a fix or a faster way, is lost when the conversation ends.
 
-rotless is four [Agent Skills](https://agentskills.io) for building skills that stay accurate and improve with use:
+rotless is four [Agent Skills](https://agentskills.io) that deal with both, for the skills you write and keep using. For a one-off prompt, or a skill someone else maintains, it's more than you need.
 
 | Skill | Job |
 |---|---|
@@ -21,30 +32,71 @@ idea ─► research ─► create ─► modernize ─► use ─► refine ─
                                            └────────────────┘
 ```
 
-The skills follow the open Agent Skills spec, so any agent that reads `SKILL.md` can load them: Claude Code, Codex, Gemini CLI, Cursor, GitHub Copilot, OpenCode and others. The creator's test runs are verified on Claude Code and Codex so far (see Status). Everything is plain skills and standard-library Python, with no hooks, background daemons or telemetry.
+The skills follow the open Agent Skills spec, so any agent that reads `SKILL.md` can load them. Everything is plain skills and standard-library Python, with no hooks, background daemons or telemetry.
 
 ## Install
 
-With the [skills CLI](https://github.com/vercel-labs/skills), for any agent:
-
-```bash
-npx skills add Shambhavagrawal/rotless -g
-```
-
-As a Claude Code plugin:
+### Claude Code
 
 ```
 /plugin marketplace add Shambhavagrawal/rotless
 /plugin install rotless@rotless
 ```
 
-Or copy `skills/*` into your agent's skills folder (`~/.agents/skills/`, `~/.claude/skills/`, `~/.codex/skills/`…).
+### Codex
 
-You need Python 3.10 or later and the [GitHub CLI](https://cli.github.com), logged in with `gh auth login`. The creator's test runs use your agents' own CLIs (`claude`, `codex`…) when they're installed.
+```bash
+codex plugin marketplace add Shambhavagrawal/rotless
+codex plugin add rotless@rotless
+```
+
+### Any other agent
+
+```bash
+npx skills add Shambhavagrawal/rotless -g
+```
+
+### From a file
+
+Apps that install a plugin or skill from a file, such as Claude's desktop and web apps or Cowork, can use the files attached to each [release](https://github.com/Shambhavagrawal/rotless/releases): `rotless-<version>.zip` for the whole plugin, or one `.skill` file per skill.
+
+### By hand
+
+Copy `skills/*` into your agent's skills folder. [docs/harnesses.md](docs/harnesses.md) covers Antigravity, Gemini CLI, GitHub Copilot, OpenCode and Cursor, the folder each one reads, and what has been verified on each.
+
+You need Python 3.10 or later and the [GitHub CLI](https://cli.github.com), logged in with `gh auth login`. Start a new agent session after installing.
+
+## Quickstart
+
+This walks through one skill from idea to its first lesson. The prompts are written as you'd type them; with the plugin installed in Claude Code you can also call each skill directly, for example `/rotless:rotless-skill-creator`.
+
+### 1. Create the skill
+
+```text
+Make a skill that turns my standup notes into a Slack post.
+```
+
+rotless-skill-creator starts with rotless-github-research, which looks for skills and tools that already do this and writes what it found to `references/prior-art.md`. Then it shows how your agent handles the task without a skill, interviews you, drafts `SKILL.md`, and writes test cases in `evals/`. It runs them with and without the skill and asks you to review the results. Before it finishes, it records what the skill relies on in `rotless.json`.
+
+### 2. Use it, and say when it gets something wrong
+
+```text
+The Slack post was too long again. Fix the skill for next time.
+```
+
+rotless-skill-refiner logs a field note, then proposes a small edit to the skill together with a check that fails on the current version. Once you approve, it applies the edit, confirms the check now passes, and writes the lesson to `references/lessons.md`.
+
+### 3. Later, check that it's still accurate
+
+```text
+Check my skills.
+```
+
+rotless-skill-modernizer runs the checks in each skill's `rotless.json`. It reports what changed outside the skill, such as a new CLI release or a moved API, with the line in the skill to fix, and lists any field notes still waiting for a retro.
 
 ## Turn on the flow
 
-Paste this into your agent's global instructions file (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`…), so every skill you write goes through it:
+To have your agent use rotless for every skill you write, paste this into its global instructions file (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`…):
 
 ```markdown
 ## Skill authoring flow
@@ -56,9 +108,9 @@ Paste this into your agent's global instructions file (`~/.claude/CLAUDE.md`, `~
 - Never use them to modify skills written by others.
 ```
 
-## Use
+## Which skill answers
 
-Ask in plain words, or call a skill by name: `/rotless-skill-refiner` in Claude Code (`/rotless:rotless-skill-refiner` if you installed the plugin), `$rotless-skill-refiner` in Codex. Which skill answers depends on where the cause lives; words like "check" or "broke" don't decide it:
+Ask in plain words, or call a skill by name: `/rotless-skill-refiner` in Claude Code (`/rotless:rotless-skill-refiner` with the plugin), `$rotless-skill-refiner` in Codex. Which skill answers depends on where the cause lives; words like "check" or "broke" don't decide it:
 
 | You say | Skill |
 |---|---|
@@ -68,39 +120,32 @@ Ask in plain words, or call a skill by name: `/rotless-skill-refiner` in Claude 
 | "My pdf skill mangled the tables again, fix it for next time", "what went wrong with my deploy skill?" | refine: it misbehaved in use (it runs modernize's `check` first to rule out drift) |
 | "My release-notes skill works but takes 8 tool calls, make it leaner", "retro my changelog skill" | refine: an optimization, measured before and after |
 
-The skills ask for your approval before every edit. Nothing runs in the background: searches, checks and test runs happen only when you ask. Their state (check history, field notes, the list of skills you own) lives in a local git repo that is never pushed, `~/.skill-registry`, or `skill-registry/` next to your skills folder if you already have one there.
+The skills ask for your approval before every edit. Nothing runs in the background: searches, checks and test runs happen only when you ask. [docs/privacy.md](docs/privacy.md) lists what each skill calls and what it stores.
 
 ## Status
 
 Verified:
-- Skill loading and headless test runs on Claude Code and Codex.
+- Skill loading and headless test runs on Claude Code and Codex, and the Codex plugin install.
 - The offline checks, on Linux and Windows with Python 3.10 and 3.13, in CI on every push.
 - The Claude Code plugin manifest, with `claude plugin validate`.
 
 Not verified yet:
 - How reliably each skill's description triggers. The test sets are in each skill's `evals/trigger-eval.json`.
-- Test runs on GitHub Copilot, Gemini CLI, OpenCode and Cursor. They're wired in; run `python skills/rotless-skill-creator/scripts/harness.py probe --agent <name>` before relying on one.
-- macOS, and an end-to-end `npx skills add` install.
+- Test runs on Antigravity, Gemini CLI, GitHub Copilot, OpenCode and Cursor; [docs/harnesses.md](docs/harnesses.md) shows how to probe one first.
+- macOS, an end-to-end `npx skills add` install, and installing from the release files.
+- The refiner's fresh-context review before it shows you a lesson; it needs an agent that can start subagents.
 
 ## Dogfooded
 
-All four skills have their own `rotless.json` and field-notes footer, and rotless maintains itself with its own tools. That has produced 29 lessons so far, from real use and from code reviews. Each lesson has a check that failed before its fix and passes now, and CI runs all of them. The first came from the refiner itself: it caught the modernizer failing to start npm-installed CLIs on Windows. Each skill's `references/lessons.md` lists its lessons.
+rotless maintains itself with its own tools, and every skill has its own `rotless.json` and field-notes footer. That has produced 32 lessons so far, from real use and from code reviews. Each lesson has a check that failed before its fix and passes now, and CI runs all of them. The first came from the refiner itself: it caught the modernizer failing to start npm-installed CLIs on Windows. Each skill's `references/lessons.md` lists its lessons.
 
-## Contributing
+## More
 
-Run what CI runs before opening a pull request:
-
-```bash
-python skills/rotless-skill-refiner/scripts/notes.py selftest
-python skills/rotless-skill-creator/scripts/test_harness.py
-python skills/rotless-skill-modernizer/scripts/test_cli_shims.py
-python skills/rotless-skill-modernizer/scripts/test_keeper.py
-python skills/rotless-github-research/scripts/test_offline.py
-python skills/rotless-skill-modernizer/scripts/keeper.py lint skills/*/
-for s in skills/*/; do python skills/rotless-skill-creator/scripts/quick_validate.py "$s" --strict; done
-```
-
-A bug fix comes with a check that fails before the fix, recorded in the skill's `references/lessons.md`.
+- [Agents](docs/harnesses.md): installing and calling the skills in each agent, and the test record.
+- [Privacy](docs/privacy.md): what runs, what it sends, and what is stored.
+- [FAQ](docs/faq.md): how rotless differs from Anthropic's skill-creator and from memory tools, cost, and version 0.1.
+- [Releases](docs/releases.md) and the [changelog](CHANGELOG.md).
+- [Contributing](CONTRIBUTING.md), and [AGENTS.md](AGENTS.md) for coding agents working on this repo.
 
 ## License
 

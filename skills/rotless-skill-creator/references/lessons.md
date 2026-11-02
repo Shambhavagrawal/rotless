@@ -67,3 +67,9 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `quick_validate` counts either name as a tracked manifest and suggests rotless.json when there is none
 - Check: scripts/test_harness.py L-12 (red on snapshot 20261102-195834, green after)
 - Why: the manifest was renamed from keeper.json to rotless.json; skills with the old name must not be told their dependencies are untracked
+
+## L-2026-11-02-13: input skills ship as SKILL.md.fixture
+- From: installing rotless as a Codex plugin, 2026-11-02 · verdict: fix
+- Change: Start: `make_workspace` renames `*.fixture` files back after copying a case's input files (scripts/harness.py); Step 4 tells authors to name input skills `SKILL.md.fixture`; the refiner's test case and its place-files.sh follow it
+- Check: scripts/test_harness.py L-13 (red on snapshot 20261102-202732, green after); the repo check also fails on any SKILL.md outside skills/<name>/
+- Why: the plugin install copied `evals/.../files/toy-search/SKILL.md`, a sample skill, and tools that scan a repo for SKILL.md files could offer it as one of rotless's skills

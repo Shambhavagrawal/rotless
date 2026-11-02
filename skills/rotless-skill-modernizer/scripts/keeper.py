@@ -9,14 +9,17 @@ manifest listing them; this engine checks them and reports only what changed.
   keeper.py init  <skill>            draft rotless.json from what SKILL.md + references/ mention
   keeper.py check <skill>... | --all run every check; print + save a digest; exit 1 if action needed
   keeper.py ack   <skill> [ID ...]   accept current upstream values as the new baseline (e.g. a new CLI version you verified)
-  keeper.py list                     your skills (folders with rotless.json) and their last result
-  keeper.py status                   one offline line for hooks
+  keeper.py own   <skill>            mark a skill as yours, so `check` runs the commands in its rotless.json
+  keeper.py lint  [skill ...]        offline gate for CI: manifests parse, claim quotes present, nothing untracked
+  keeper.py prior-art-diff <skill> <new file>   compare a refreshed prior-art.md with the current one
+  keeper.py list                     your skills, their last result and open field notes
+  keeper.py status                   a one-line offline summary
 
-<skill> is a skill name or a path. Names are looked up in: $SKILL_ROOTS (os.pathsep-separated), the
-skills folder this script is installed in (works in any harness: Claude Code, Codex, Antigravity…),
-and ./.claude/skills, ./.agents/skills. Only skills with a rotless.json are ever checked: third-party
-skills belong to their authors. Never writes to a skill folder except `ack` (rotless.json) and `init`
-(rotless.draft.json). State, digests, history: a local git repo, the skill-registry folder next to the
+<skill> is a skill name or a path. Names are looked up in $SKILL_ROOTS (os.pathsep-separated), the
+skills folder this script is installed in, every agent's user skills folder (~/.claude/skills,
+~/.agents/skills, ~/.codex/skills…), and ./.claude/skills and ./.agents/skills. Only skills you marked
+as yours (`init` or `own`) are checked, because a check runs the commands in their rotless.json.
+Never writes to a skill folder except `ack` (rotless.json) and `init` (rotless.draft.json). State, digests, history: a local git repo, the skill-registry folder next to the
 skills folder if one exists there, otherwise ~/.skill-registry (override with $SKILL_REGISTRY).
 """
 import argparse
@@ -216,7 +219,7 @@ def chk_cli(d, prev, skill_dir):
     installed = ver(so + se)
     tested = ver(d.get("tested"))
     for sub in d.get("needs", []):
-        # many CLIs (gh, claude) exit 0 and print the PARENT's help for an unknown subcommand,
+        # many CLIs (gh, claude) exit 0 and print the parent's help for an unknown subcommand,
         # so a subcommand exists only if its own help names it ("USAGE gh repo read-dir …")
         c, so, se = run([name, *sub.split(), "--help"])
         if c != 0 or f"{name} {sub}".lower() not in re.sub(r"\s+", " ", so + se).lower():

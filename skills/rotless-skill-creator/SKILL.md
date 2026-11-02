@@ -35,7 +35,7 @@ If a sibling isn't installed, do its step by hand and say so: search for prior a
 ## Finding things
 
 - `C` = this skill's folder (the one holding this SKILL.md; Claude Code prints it as "Base directory for this skill"). Scripts are `$C/scripts/…`; run them with `python` (`python3` where `python` is Python 2).
-- Sibling skills normally sit next to this folder; otherwise look in your agent's skills folders.
+- Sibling skills sit next to this folder, in the same skills folder. Use those copies only: don't search other installs or plugin-cache versions, which can be older.
 - `python $C/scripts/harness.py agents` lists the agent CLIs on this machine and which ones are verified for headless runs.
 
 ## How tests run on your agent
@@ -88,7 +88,7 @@ skill-name/
 ├── references/           docs loaded when needed (prior-art.md, lessons.md…)
 ├── assets/               templates, icons, fonts used in output
 ├── evals/                test cases (step 4)
-└── rotless.json           what the skill relies on (step 8)
+└── rotless.json          what the skill relies on (step 8)
 ```
 
 Agents load a skill in stages. The name and description are always in context (about 100 words), the body loads when the skill triggers (keep it under 500 lines), and bundled files load only when needed. Point clearly to each reference file and say when to read it, and give long references a table of contents. A skill covering several variants (AWS/GCP/Azure) keeps the selection logic in SKILL.md and one reference file per variant.
@@ -116,6 +116,8 @@ evals/flags-negative-quantity/
 ├── graders/        one statement per file; a placeholder until step 5
 └── files/          input files, only if needed
 ```
+
+If an input file is itself a skill, name it `SKILL.md.fixture` in the case's `files/`, so tools that scan a repo for skills don't offer it as one of yours. `run_case.py` restores the real name in each run, and the case's `place-files.sh` should do the same.
 
 An older skill may have `evals/evals.json`. Its tests still count: run them alongside the case folders, and never edit, convert or delete that file unless asked.
 

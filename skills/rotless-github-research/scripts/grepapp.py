@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Search code across ~1M public GitHub repos via grep.app's public MCP endpoint.
 
-No install, no auth. Works whether or not the grep MCP server is added to your agent.
+It needs no install and no auth, and works whether or not the grep MCP server is added to your agent.
 
 Usage:
   grepapp.py "sarkariresult.com"

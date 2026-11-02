@@ -1,16 +1,14 @@
 # Schemas
 
-This document defines the file formats used by skill-creator.
-
----
+The file formats rotless-skill-creator uses.
 
 ## Test cases (`evals/<case-name>/`)
 
-Each test is a folder under `evals/` in the skill directory, in the layout `claude plugin eval` reads (the tree is in SKILL.md, under Test Cases). Always write new tests this way. You never need the CLI to use them.
+Each test is a folder under `evals/` in the skill directory, in the layout `claude plugin eval` reads (SKILL.md shows the tree, under Step 4: Test cases). Always write new tests this way; you don't need the CLI to use them.
 
-**Case name**: the folder name. Lowercase letters, digits and hyphens, starting with a letter; a few words on what the test checks. Don't use `results`, `mocks` or `node_modules` (the CLI keeps those names for itself), `files` (older tests keep their input files in `evals/files/`), or `true`, `false` or `null` (they don't read as text in `case.yaml`).
+The case name is the folder name: lowercase letters, digits and hyphens, starting with a letter, in a few words that say what the test checks. Don't use `results`, `mocks` or `node_modules` (the CLI keeps those names for itself), `files` (older tests keep their input files in `evals/files/`), or `true`, `false` or `null` (they don't read as text in `case.yaml`).
 
-**prompt.md**: a settings block, copied as is, then the prompt exactly as the user would type it.
+`prompt.md` holds a settings block, copied as is, then the prompt exactly as the user would type it.
 
 ```markdown
 ---
@@ -26,7 +24,7 @@ User's task prompt
 - Only the CLI uses the settings: `max_turns` and `timeout_seconds` cap a run, `allowed_tools` is what the run may ask for, `tags` let the user filter. An unknown key there makes the case fail to load.
 - Keep free text out of the settings block. It ends at the first `---` it meets, even in the middle of a sentence, so descriptions go in `case.yaml`.
 
-**case.yaml**: the version (quoted, or it reads as a number and the case fails to load), the name (same as the folder), and a human-readable description of success (indented under the `|`, so that no character in it needs escaping).
+`case.yaml` holds the version (quoted, or it reads as a number and the case fails to load), the name (the same as the folder), and a description of success for people to read (indented under the `|`, so no character in it needs escaping).
 
 ```yaml
 schema_version: "1.1"
@@ -35,7 +33,7 @@ expected_outcome: |
   Description of expected result
 ```
 
-**graders/NN-few-words.md**: one verifiable statement per file, numbered so that they keep their order (`01-states-total-revenue.md`, `02-flags-negative-row.md`). The block on top is always the same, and the CLI ignores a file without it; the body is the statement.
+Each file in `graders/`, named `NN-few-words.md`, holds one verifiable statement, numbered so the files keep their order (`01-states-total-revenue.md`, `02-flags-negative-row.md`). The block on top is always the same, and the CLI ignores a file without it; the body is the statement.
 
 ```markdown
 ---
@@ -53,7 +51,7 @@ A case with no grader fails to load, so write a placeholder with the case: `grad
 
 If a case holds graders of another `type` (`regex`, `file_exists`, `tool_used`, `tool_order`, `baseline`), someone wrote them for the CLI. Leave them as they are, and grade what each one describes as well as you can from the outputs and transcript.
 
-**Input files**: put them in the case's `files/` folder and hand their paths to the run. So that the CLI can find them too, do three more things: end the prompt with a line `Input files: orders.csv, notes.txt`; add this `place-files.sh` next to `prompt.md`:
+Put input files in the case's `files/` folder and hand their paths to the run. So that the CLI finds them too, do three more things: end the prompt with a line `Input files: orders.csv, notes.txt`; add this `place-files.sh` next to `prompt.md`:
 
 ```bash
 #!/usr/bin/env bash
@@ -68,9 +66,7 @@ context:
   scaffold_script: place-files.sh
 ```
 
-**Running the same tests with the CLI** (optional; Claude Code v2.1.269 or later), from the skill directory: `claude plugin eval . --allow-tools Write,Edit,Bash`, plus `--scaffold` if any case has input files. It runs each case folder with and without the skill (it does not read `evals.json`) and writes its own report under `evals/results/`. These are real, billed model runs, so if the user has Claude Code, offer it rather than just doing it.
-
----
+To run the same tests with the CLI (optional; Claude Code v2.1.269 or later), run `claude plugin eval . --allow-tools Write,Edit,Bash` from the skill directory, adding `--scaffold` if any case has input files. It runs each case folder with and without the skill (it does not read `evals.json`) and writes its own report under `evals/results/`. These are real, billed model runs, so if the user has Claude Code, offer this; don't just run it.
 
 ## evals.json (older format: read it, don't write it)
 
@@ -102,7 +98,7 @@ Earlier versions of skill-creator kept all tests in `evals/evals.json`. When a s
 | `files` (paths relative to the skill root) | copies in the case's `files/` |
 | each `expectations` entry (`assertions` in some files; read both) | one file in `graders/` |
 
-**Case name of an old test**: always `<skill>-<label>`.
+An old test's case name is always `<skill>-<label>`:
 
 1. To slug a text: lowercase it, keep its first 8 words, turn every run of characters other than a-z and 0-9 into one hyphen, cut it to 48 characters, and drop any hyphen at either end.
 2. `<skill>` is the slug of the file's `skill_name`; if the file has none, of the `name` in the skill's SKILL.md. If that leaves nothing, it is `eval`.
@@ -116,13 +112,11 @@ Earlier versions of skill-creator kept all tests in `evals/evals.json`. When a s
 | `"id": 4, "name": "Odd rows are mentioned"` | `csv-summary-odd-rows-are-mentioned` |
 | the first entry, with none of the three | `csv-summary-001` |
 
-**Putting the two together.** The set of tests for a run is every case folder, plus every `evals.json` entry whose case name is not already a case folder. When both exist the folder wins, because it is the newer version: when an old test needs to change (a better prompt, new assertions), write the new version as a case folder with the test's case name, and leave the file alone. If the user asks to move everything over, write one folder per entry with the table above, then ask before removing the file.
-
----
+To combine the two formats: the set of tests for a run is every case folder, plus every `evals.json` entry whose case name is not already a case folder. When both exist the folder wins, because it is the newer version: when an old test needs to change (a better prompt, new assertions), write the new version as a case folder with the test's case name, and leave the file alone. If the user asks to move everything over, write one folder per entry with the table above, then ask before removing the file.
 
 ## history.json
 
-Tracks version progression in Improve mode. Located at workspace root.
+Records how versions progress while a skill is being improved. It sits at the workspace root.
 
 ```json
 {
@@ -155,7 +149,7 @@ Tracks version progression in Improve mode. Located at workspace root.
 }
 ```
 
-**Fields:**
+Fields:
 - `started_at`: ISO timestamp of when improvement started
 - `skill_name`: Name of the skill being improved
 - `current_best`: Version identifier of the best performer
@@ -165,11 +159,9 @@ Tracks version progression in Improve mode. Located at workspace root.
 - `iterations[].grading_result`: "baseline", "won", "lost", or "tie"
 - `iterations[].is_current_best`: Whether this is the current best version
 
----
-
 ## grading.json
 
-Output from the grader agent. Located at `<run-dir>/grading.json`.
+Written by the grader agent, at `<run-dir>/grading.json`.
 
 ```json
 {
@@ -233,7 +225,7 @@ Output from the grader agent. Located at `<run-dir>/grading.json`.
 }
 ```
 
-**Fields:**
+Fields:
 - `expectations[]`: Graded expectations with evidence
 - `summary`: Aggregate pass/fail counts
 - `execution_metrics`: Tool usage and output size (from executor's metrics.json)
@@ -242,11 +234,9 @@ Output from the grader agent. Located at `<run-dir>/grading.json`.
 - `user_notes_summary`: Issues flagged by the executor
 - `eval_feedback`: (optional) Improvement suggestions for the evals, only present when the grader identifies issues worth raising
 
----
-
 ## metrics.json
 
-Output from the executor agent. Located at `<run-dir>/outputs/metrics.json`.
+Written by the executor agent, at `<run-dir>/outputs/metrics.json`.
 
 ```json
 {
@@ -267,7 +257,7 @@ Output from the executor agent. Located at `<run-dir>/outputs/metrics.json`.
 }
 ```
 
-**Fields:**
+Fields:
 - `tool_calls`: Count per tool type
 - `total_tool_calls`: Sum of all tool calls
 - `total_steps`: Number of major execution steps
@@ -276,13 +266,11 @@ Output from the executor agent. Located at `<run-dir>/outputs/metrics.json`.
 - `output_chars`: Total character count of output files
 - `transcript_chars`: Character count of transcript
 
----
-
 ## timing.json
 
-Wall clock timing for a run. Located at `<run-dir>/timing.json`.
+A run's wall-clock timing, at `<run-dir>/timing.json`.
 
-**How to capture:** When a subagent task completes, the task notification includes `total_tokens` and `duration_ms`. Save these immediately — they are not persisted anywhere else and cannot be recovered after the fact.
+To capture it: when a subagent task completes, its notification includes `total_tokens` and `duration_ms`. Save them right away; they aren't stored anywhere else and can't be recovered later.
 
 ```json
 {
@@ -298,11 +286,9 @@ Wall clock timing for a run. Located at `<run-dir>/timing.json`.
 }
 ```
 
----
-
 ## benchmark.json
 
-Output from Benchmark mode. Located at `benchmarks/<timestamp>/benchmark.json`.
+Written by a benchmark run, at `benchmarks/<timestamp>/benchmark.json`.
 
 ```json
 {
@@ -369,7 +355,7 @@ Output from Benchmark mode. Located at `benchmarks/<timestamp>/benchmark.json`.
 }
 ```
 
-**Fields:**
+Fields:
 - `metadata`: Information about the benchmark run
   - `skill_name`: Name of the skill
   - `timestamp`: When the benchmark was run
@@ -386,13 +372,11 @@ Output from Benchmark mode. Located at `benchmarks/<timestamp>/benchmark.json`.
   - `delta`: The first configuration minus the second, as strings like `"+0.50"`, `"+13.0"`, `"+1700"`. All three are `null` when there is only one configuration. `time_seconds` or `tokens` is also `null` when a run of either of the two recorded no value
 - `notes`: Freeform observations from the analyzer, and the notes that `aggregate_benchmark.py` writes when a run recorded no time or token count
 
-**Important:** The viewer reads these field names exactly. Using `config` instead of `configuration`, or putting `pass_rate` at the top level of a run instead of nested under `result`, will cause the viewer to show empty/zero values. Always reference this schema when generating benchmark.json manually.
-
----
+The viewer reads these field names exactly. Writing `config` instead of `configuration`, or putting `pass_rate` at the top level of a run instead of under `result`, makes it show empty or zero values. Check this schema whenever you write benchmark.json by hand.
 
 ## comparison.json
 
-Output from blind comparator. Located at `<grading-dir>/comparison-N.json`.
+Written by the blind comparator, at `<grading-dir>/comparison-N.json`.
 
 ```json
 {
@@ -463,11 +447,9 @@ Output from blind comparator. Located at `<grading-dir>/comparison-N.json`.
 }
 ```
 
----
-
 ## analysis.json
 
-Output from post-hoc analyzer. Located at `<grading-dir>/analysis.json`.
+Written by the post-hoc analyzer, at `<grading-dir>/analysis.json`.
 
 ```json
 {

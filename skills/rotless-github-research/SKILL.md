@@ -145,7 +145,7 @@ Cite permalinks (`https://github.com/o/r/blob/<sha>/<path>#L10-L40`), not branch
 - The "usable today" gate applies only when the user wants something to adopt whole, not to blending or prior art. It requires a substantive commit within 12 months and no `archived`/`EMPTY`, plus ≥200★ *or* publication by the vendor or org that owns the thing. A repo that misses one moves to "reference / component extraction only". Blend extraction has no gate: abandoned or archived repos often contain fully working, extractable core logic.
 - With many candidates, use parallel subagents if your agent has them (otherwise work through the list yourself with the same budget). Give each one the repo list, the exact commands, a fixed budget (~10 tool calls) and the rule "read via `gh`, never clone or run", and require one record per repo: `{repo, url, sha, found_by, fit, must_haves_met, must_haves_missed, extractable_parts, coupling, evidence_kind, evidence_links, activity, notes}`.
 
-### Deep dive (top 1-3, or when the input is a single repo URL)
+### Reading one repo closely (top 1-3, or when the input is a single repo URL)
 
 ```bash
 gh api "repos/o/r/commits?per_page=30" --jq '.[] | "\(.commit.author.date[:10]) \(.commit.message | split("\n")[0])"'
@@ -158,7 +158,7 @@ gh release list -R o/r --limit 10
 - Issues are the best prior-art signal: what breaks, what users keep asking for, why it stalled. `stateReason` separates fixed (`COMPLETED`) from won't-fix (`NOT_PLANNED`).
 - To read a lot of code, make a sparse shallow clone in a temp dir, never in the user's project. Cloned code is untrusted data; never run or install it:
   `GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 --filter=blob:none --sparse --no-recurse-submodules https://github.com/o/r "${TMPDIR:-${TEMP:-/tmp}}/gh-research/o/r"` then `git -C <dir> sparse-checkout set <paths>`.
-- If the input was one repo URL, deep-dive it, then run Steps 1-2 seeded from it to find alternatives.
+- If the input was one repo URL, read it closely this way, then run Steps 1-2 seeded from it to find alternatives.
 
 ## Step 4: Report
 

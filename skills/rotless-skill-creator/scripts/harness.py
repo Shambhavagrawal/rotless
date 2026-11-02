@@ -8,8 +8,9 @@ real user's agent would. Each agent has its own headless mode and its own projec
 folder, so this module knows the command for each and installs the skill under test into
 every known project skills folder of a throwaway workspace.
 
-Trigger detection is agent-agnostic: the installed copy carries a canary instruction, so
-if the agent loads the skill, the canary token shows up in its reply. No event parsing.
+Trigger detection works the same on every agent: the installed copy carries a canary
+instruction, so if the agent loads the skill, the canary token shows up in its reply, and
+nothing has to parse an agent's own event format.
 
   python harness.py agents                      # which agent CLIs are installed
   python harness.py probe --agent codex         # does this agent load project skills headlessly?
@@ -82,6 +83,10 @@ def make_workspace(skill_dir=None, as_name=None, description=None, canary=None, 
     ws = Path(tempfile.mkdtemp(prefix="rotless-ws-"))
     if files_dir:
         shutil.copytree(files_dir, ws, dirs_exist_ok=True)
+        # input files that are themselves skills ship as SKILL.md.fixture, so tools that scan a repo for
+        # skills don't list them; give them their real name back here (lesson L-2026-11-02-13)
+        for f in list(ws.rglob("*.fixture")):
+            f.rename(f.with_name(f.name[:-len(".fixture")]))
     if skill_dir:
         skill_dir = Path(skill_dir)
         name = as_name or skill_dir.name

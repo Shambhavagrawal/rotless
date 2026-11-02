@@ -37,7 +37,7 @@
       flex-direction: column;
     }
 
-    /* ---- Header ---- */
+    /* Header */
     .header {
       background: var(--header-bg);
       color: var(--header-text);
@@ -63,7 +63,7 @@
       text-align: right;
     }
 
-    /* ---- Main content ---- */
+    /* Main content */
     .main {
       flex: 1;
       overflow-y: auto;
@@ -73,7 +73,7 @@
       gap: 1.25rem;
     }
 
-    /* ---- Sections ---- */
+    /* Sections */
     .section {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -95,7 +95,7 @@
       padding: 1rem;
     }
 
-    /* ---- Config badge ---- */
+    /* Config badge */
     .config-badge {
       display: inline-block;
       padding: 0.2rem 0.625rem;
@@ -117,14 +117,14 @@
       color: #f57f17;
     }
 
-    /* ---- Prompt ---- */
+    /* Prompt */
     .prompt-text {
       white-space: pre-wrap;
       font-size: 0.9375rem;
       line-height: 1.6;
     }
 
-    /* ---- Outputs ---- */
+    /* Outputs */
     .output-file {
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -217,7 +217,7 @@
       text-align: center;
     }
 
-    /* ---- Feedback ---- */
+    /* Feedback */
     .prev-feedback {
       background: var(--bg);
       border: 1px solid var(--border);
@@ -260,7 +260,7 @@
       min-height: 1.1em;
     }
 
-    /* ---- Grades (collapsible) ---- */
+    /* Grades (collapsible) */
     .grades-toggle {
       display: flex;
       align-items: center;
@@ -323,7 +323,7 @@
       padding-left: 1.5rem;
     }
 
-    /* ---- View tabs ---- */
+    /* View tabs */
     .view-tabs {
       display: flex;
       gap: 0;
@@ -352,7 +352,7 @@
     .view-panel { display: none; }
     .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
 
-    /* ---- Benchmark view ---- */
+    /* Benchmark view */
     .benchmark-view {
       padding: 1.5rem 2rem;
       overflow-y: auto;
@@ -418,7 +418,7 @@
       padding: 3rem;
     }
 
-    /* ---- Navigation ---- */
+    /* Navigation */
     .nav {
       display: flex;
       justify-content: space-between;
@@ -473,7 +473,7 @@
     .done-btn.ready:hover {
       background: var(--accent-hover);
     }
-    /* ---- Done overlay ---- */
+    /* Done overlay */
     .done-overlay {
       display: none;
       position: fixed;
@@ -519,7 +519,7 @@
     .done-card button:hover {
       background: var(--bg);
     }
-    /* ---- Toast ---- */
+    /* Toast */
     .toast {
       position: fixed;
       bottom: 5rem;
@@ -645,20 +645,19 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    // ---- Embedded data (injected by generate_review.py) ----
+    // Embedded data, injected by generate_review.py
     /*__EMBEDDED_DATA__*/
 
-    // ---- State ----
-    let feedbackMap = {};  // run_id -> feedback text
+    // State
+    let feedbackMap = {};  // feedback text for each run_id
     let currentIndex = 0;
     let visitedRuns = new Set();
 
-    // ---- Init ----
+    // Init
     async function init() {
-      // Load saved feedback from server — but only if this isn't a fresh
-      // iteration (indicated by previous_feedback being present). When
-      // previous feedback exists, the feedback.json on disk is stale from
-      // the prior iteration and should not pre-fill the textareas.
+      // Load saved feedback from the server only when there is no previous_feedback.
+      // When there is, this is a new iteration, and feedback.json on disk is left
+      // over from the last one, so it must not pre-fill the textareas.
       const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
         || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
       if (!hasPrevious) {
@@ -684,7 +683,7 @@
       });
     }
 
-    // ---- Navigation ----
+    // Navigation
     function navigate(delta) {
       const newIndex = currentIndex + delta;
       if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
@@ -699,7 +698,7 @@
         currentIndex === EMBEDDED_DATA.runs.length - 1;
     }
 
-    // ---- Show a run ----
+    // Show a run
     function showRun(index) {
       currentIndex = index;
       const run = EMBEDDED_DATA.runs[index];
@@ -760,7 +759,7 @@
       document.querySelector(".main").scrollTop = 0;
     }
 
-    // ---- Render outputs ----
+    // Render outputs
     function renderOutputs(run) {
       const container = document.getElementById("outputs-body");
       container.innerHTML = "";
@@ -826,7 +825,7 @@
       }
     }
 
-    // ---- XLSX rendering via SheetJS ----
+    // XLSX rendering via SheetJS
     function renderXlsx(container, b64Data) {
       try {
         const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
@@ -854,7 +853,7 @@
       }
     }
 
-    // ---- Grades ----
+    // Grades
     function renderGrades(run) {
       const section = document.getElementById("grades-section");
       const content = document.getElementById("grades-content");
@@ -911,7 +910,7 @@
       arrow.classList.toggle("open");
     }
 
-    // ---- Previous outputs (collapsible) ----
+    // Previous outputs (collapsible)
     function renderPrevOutputs(run) {
       const section = document.getElementById("prev-outputs-section");
       const content = document.getElementById("prev-outputs-content");
@@ -990,7 +989,7 @@
       arrow.classList.toggle("open");
     }
 
-    // ---- Feedback (saved to server -> feedback.json) ----
+    // Feedback, saved through the server to feedback.json
     function saveCurrentFeedback() {
       const run = EMBEDDED_DATA.runs[currentIndex];
       const text = document.getElementById("feedback").value;
@@ -1016,13 +1015,13 @@
       }).then(() => {
         document.getElementById("feedback-status").textContent = "Saved";
       }).catch(() => {
-        // Static mode or server unavailable — no-op on auto-save,
-        // feedback will be downloaded on final submit
+        // Static mode or no server: auto-save does nothing, and the
+        // feedback is downloaded on the final submit
         document.getElementById("feedback-status").textContent = "Will download on submit";
       });
     }
 
-    // ---- Done ----
+    // Done
     function showDoneDialog() {
       // Save current textarea to feedbackMap (but don't POST yet)
       const run = EMBEDDED_DATA.runs[currentIndex];
@@ -1033,8 +1032,8 @@
         feedbackMap[run.id] = text;
       }
 
-      // POST once with status: complete — include ALL runs so the model
-      // can distinguish "no feedback" (looks good) from "not reviewed"
+      // POST once with status: complete, including every run, so the model
+      // can tell "no feedback" (looks good) from "not reviewed"
       const reviews = [];
       const ts = new Date().toISOString();
       for (const r of EMBEDDED_DATA.runs) {
@@ -1048,7 +1047,7 @@
       }).then(() => {
         document.getElementById("done-overlay").classList.add("visible");
       }).catch(() => {
-        // Server not available (static mode) — download as file
+        // No server (static mode): download the feedback as a file
         const blob = new Blob([payload], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -1066,7 +1065,7 @@
       document.getElementById("done-overlay").classList.remove("visible");
     }
 
-    // ---- Toast ----
+    // Toast
     function showToast(message) {
       const toast = document.getElementById("toast");
       toast.textContent = message;
@@ -1074,7 +1073,7 @@
       setTimeout(() => toast.classList.remove("visible"), 2000);
     }
 
-    // ---- Keyboard nav ----
+    // Keyboard nav
     document.addEventListener("keydown", (e) => {
       // Don't capture when typing in textarea
       if (e.target.tagName === "TEXTAREA") return;
@@ -1088,7 +1087,7 @@
       }
     });
 
-    // ---- Util ----
+    // Util
     function getDownloadUri(file) {
       if (file.data_uri) return file.data_uri;
       if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
@@ -1102,7 +1101,7 @@
       return div.innerHTML.replace(/"/g, "&quot;");
     }
 
-    // ---- View switching ----
+    // View switching
     function switchView(view) {
       document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
       document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
@@ -1110,7 +1109,7 @@
       document.getElementById("panel-" + view).classList.add("active");
     }
 
-    // ---- Benchmark rendering ----
+    // Benchmark rendering
     function renderBenchmark() {
       const data = EMBEDDED_DATA.benchmark;
       if (!data) return;
@@ -1322,7 +1321,7 @@
       container.innerHTML = html;
     }
 
-    // ---- Start ----
+    // Start
     init();
     renderBenchmark();
   </script>

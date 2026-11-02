@@ -1,0 +1,46 @@
+name: release
+# Pushing a tag vX.Y.Z runs the checks, builds the release files and creates a draft release.
+# A person reads the draft and publishes it; this workflow never publishes.
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Checks
+        run: python tests/run_checks.py
+      - name: Build release files (fails unless the tag matches plugin.json)
+        run: python scripts/build_release.py --out dist --tag "$GITHUB_REF_NAME"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: dist/
+
+  draft:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: dist
+      - name: Verify checksums
+        run: cd dist && sha256sum -c SHA256SUMS
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
+            --title "rotless ${GITHUB_REF_NAME#v}" --notes-file dist/RELEASE_NOTES.md \
+            dist/*.zip dist/*.skill dist/SHA256SUMS

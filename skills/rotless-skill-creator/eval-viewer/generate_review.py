@@ -7,9 +7,10 @@ a tiny HTTP server. Feedback auto-saves to feedback.json in the workspace.
 
 Usage:
     python generate_review.py <workspace-path> [--port PORT] [--skill-name NAME]
-    python generate_review.py <workspace-path> --previous-feedback /path/to/old/feedback.json
+    python generate_review.py <workspace-path> --previous-workspace <previous-iteration>
+    python generate_review.py <workspace-path> --static review.html
 
-No dependencies beyond the Python stdlib are required.
+It needs only the Python standard library.
 """
 
 import argparse
@@ -315,7 +316,7 @@ def embed_file(path: Path) -> dict:
             "data_b64": b64,
         }
     else:
-        # Binary / unknown — base64 download link
+        # Binary or unknown type: offer it as a base64 download link
         try:
             raw = path.read_bytes()
             b64 = base64.b64encode(raw).decode("ascii")
@@ -401,9 +402,7 @@ def generate_html(
     return template.replace("/*__EMBEDDED_DATA__*/", f"const EMBEDDED_DATA = {data_json};")
 
 
-# ---------------------------------------------------------------------------
-# HTTP server (stdlib only, zero dependencies)
-# ---------------------------------------------------------------------------
+# HTTP server (standard library only)
 
 def _kill_port(port: int) -> None:
     """Kill any process listening on the given port."""
@@ -574,7 +573,7 @@ def main() -> None:
     try:
         server = HTTPServer(("127.0.0.1", port), handler)
     except OSError:
-        # Port still in use after kill attempt — find a free one
+        # The port is still in use after the kill attempt, so find a free one
         server = HTTPServer(("127.0.0.1", 0), handler)
         port = server.server_address[1]
 

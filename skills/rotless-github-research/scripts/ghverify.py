@@ -8,8 +8,8 @@ Per repo it reports:
     messages; pushedAt and raw last commit overstate activity)
   - issue resolution % (closed / all issues), merged PRs, people involved, org vs user,
     releases in the last 365 days
-  - evidence of real engineering from the root tree: tests, CI (.github/workflows,
-    not just .github), package manifest, SECURITY.md
+  - evidence of real engineering from the root tree: tests, CI (a .github/workflows folder;
+    a bare .github doesn't count), package manifest, SECURITY.md
   - warning flags: !velocity (stars/day since creation > 100: viral, hype or bought stars,
     needs context), !lowfork (>=1000 stars but forks/stars < 0.005), new (< 14 days old),
     stale Ny (no substantive commit for 2+ years; flagged, never demoted: an abandoned tool
