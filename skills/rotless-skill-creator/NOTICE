@@ -1,0 +1,26 @@
+rotless-skill-creator
+Copyright 2026 rotless contributors
+
+This skill is a modified version of Anthropic's skill-creator
+(https://github.com/anthropics/skills/tree/main/skills/skill-creator, compared at
+commit ca45fc496a3436251f191354091d557da31c15b5, forked from the newer copy distributed
+with Claude), licensed under the Apache License, Version 2.0 (see LICENSE.txt).
+
+Changes made by rotless contributors:
+- SKILL.md: rewritten for any agent (Claude Code, Codex, Gemini CLI, Cursor, GitHub Copilot,
+  OpenCode); adds prior art via rotless-github-research, a failing-baseline step (idea from
+  obra/superpowers writing-skills, MIT), portability rules, three test-run modes, an
+  agent-driven trigger-tuning loop, and hand-offs to rotless-skill-modernizer and
+  rotless-skill-refiner. Claude app and Cowork sections removed.
+- scripts/run_eval.py: replaced. Trigger tests run on any agent CLI and detect loading with a
+  canary token instead of Claude Code stream events.
+- scripts/harness.py, scripts/run_case.py: new.
+- scripts/improve_description.py, scripts/run_loop.py, scripts/generate_report.py: removed
+  (they required `claude -p`; the agent now proposes descriptions itself in SKILL.md step 7).
+- scripts/quick_validate.py: no PyYAML dependency; name must match its folder; metadata must be
+  a mapping; portability warnings.
+- scripts/package_skill.py, scripts/utils.py, scripts/aggregate_benchmark.py,
+  eval-viewer/generate_review.py: UTF-8 file encoding (Windows), agent-neutral wording.
+
+Unchanged from Anthropic's skill-creator: agents/, assets/, eval-viewer/viewer.html,
+references/schemas.md.

@@ -1,0 +1,129 @@
+{
+  "skill": "rotless-skill-modernizer",
+  "verified": {
+    "date": "2026-11-02",
+    "note": "gh 2.103.3; re-read both docs 2026-11-02: metadata string->string and argument-hint rejected outside Claude Code still hold; agent-agnostic wording"
+  },
+  "deps": [
+    {
+      "type": "cli",
+      "name": "gh",
+      "tested": "2.103.3",
+      "upstream": "github:cli/cli",
+      "needs": [
+        "api",
+        "api graphql"
+      ]
+    },
+    {
+      "type": "cli",
+      "name": "claude",
+      "needs": [
+        "plugin eval"
+      ],
+      "why": "P4 behaviour checks via `claude plugin eval --no-publish`"
+    },
+    {
+      "type": "skill",
+      "name": "rotless-github-research",
+      "files": [
+        "scripts/ghsweep.py",
+        "scripts/ghverify.py"
+      ],
+      "why": "prior art for `fix`/`refresh`, written as prior-art.md in the shape this skill owns (needs its verdict and source ledger); ghsweep.py runs the landscape searches",
+      "mustContain": [
+        "Verdict",
+        "Source ledger"
+      ]
+    },
+    {
+      "type": "doc",
+      "id": "doc:claude-skills",
+      "url": "https://code.claude.com/docs/en/skills.md",
+      "why": "SKILL.md frontmatter fields, discovery locations: the rules about portability and sidecar manifests depend on it"
+    },
+    {
+      "type": "doc",
+      "id": "doc:agentskills-spec",
+      "url": "https://agentskills.io/specification",
+      "why": "metadata is string->string; unknown keys: why keeper.json is a sidecar, not frontmatter"
+    },
+    {
+      "type": "doc",
+      "id": "doc:plugin-evals",
+      "url": "https://code.claude.com/docs/en/plugin-evals.md",
+      "why": "P4 design; the --no-publish requirement"
+    },
+    {
+      "type": "skill",
+      "name": "rotless-skill-creator",
+      "files": [
+        "scripts/quick_validate.py",
+        "scripts/run_case.py",
+        "scripts/run_eval.py"
+      ],
+      "mustContain": [
+        "Step 0: Local first, then prior art",
+        "Step 6: Improve",
+        "Step 8: Validate, record, hand off",
+        "prior-art.md"
+      ],
+      "why": "builds new skills and hands back for `init`; `fix` cites its Step 6; these are the step names our text cites"
+    },
+    {
+      "type": "skill",
+      "name": "rotless-skill-refiner",
+      "files": [
+        "scripts/notes.py"
+      ],
+      "mustContain": [
+        "The retro",
+        "lessons.md"
+      ],
+      "why": "usage notes found during `fix` go to its retro; its lesson cases (references/lessons.md) must keep passing"
+    },
+    {
+      "type": "command",
+      "id": "lesson-cli-shims",
+      "run": "python scripts/test_cli_shims.py",
+      "why": "lesson L-2026-11-02-1: keeper.run must launch .CMD/.BAT shim CLIs on Windows"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claude-md-flow-rule",
+      "quote": "Skill authoring flow rule in the user's global agent instructions file",
+      "check": {
+        "run": "python -c \"import pathlib;h=pathlib.Path.home();print(''.join(p.read_text(encoding='utf-8') for p in [h/'.claude'/'CLAUDE.md',h/'.codex'/'AGENTS.md',h/'.gemini'/'GEMINI.md',h/'.config'/'opencode'/'AGENTS.md'] if p.is_file()))\"",
+        "regex": "## Skill authoring flow"
+      },
+      "why": "skill-creator can't be edited; this rule is how it learns about rotless-github-research and rotless-skill-modernizer"
+    }
+  ],
+  "landscape": {
+    "searches": [
+      {
+        "name": "skill-maintenance",
+        "why": "new tools for keeping authored skills/docs current",
+        "queries": [
+          "skill drift detection",
+          "skill dependencies manifest",
+          "skill freshness",
+          "doc drift detection",
+          "skill canary test",
+          "agent skill maintenance"
+        ],
+        "must": "skill|agent|claude|doc",
+        "exclude": "trading|crypto|anime|resume",
+        "windowDays": 180,
+        "minStars": 1
+      }
+    ]
+  },
+  "ignore": [
+    "gh repo read-dir"
+  ],
+  "_ignoreWhy": {
+    "gh repo read-dir": "named in DESIGN.md as an example of gh's help behaviour, not used"
+  }
+}

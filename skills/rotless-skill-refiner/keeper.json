@@ -1,0 +1,207 @@
+{
+  "skill": "rotless-skill-refiner",
+  "verified": {
+    "date": "2026-11-02",
+    "note": "built 2026-11-02 with rotless-skill-creator; notes.py selftest passes"
+  },
+  "deps": [
+    {
+      "type": "github-repo",
+      "repo": "AMAP-ML/SkillClaw",
+      "role": "adjacent (cautionary)",
+      "_where": "references/prior-art.md:23"
+    },
+    {
+      "type": "github-repo",
+      "repo": "BayramAnnakov/claude-reflect",
+      "role": "direct match (capture)",
+      "files": [
+        "commands/reflect.md",
+        "scripts/lib/reflect_utils.py"
+      ],
+      "_where": "references/prior-art.md:13"
+    },
+    {
+      "type": "github-repo",
+      "repo": "Bennyoooo/skillmaxxing",
+      "role": "direct match (gate)",
+      "files": [
+        "skill-maxing-plugin/skills/optimize-skill/SKILL.md",
+        "src/eval/schema.ts"
+      ],
+      "_where": "references/prior-art.md:15"
+    },
+    {
+      "type": "github-repo",
+      "repo": "ECNU-ICALK/AutoSkill",
+      "role": "adjacent",
+      "_where": "references/prior-art.md:22"
+    },
+    {
+      "type": "github-repo",
+      "repo": "NousResearch/hermes-agent-self-evolution",
+      "role": "adjacent",
+      "files": [
+        "evolution/core/constraints.py"
+      ],
+      "_where": "references/prior-art.md:21"
+    },
+    {
+      "type": "github-repo",
+      "repo": "ZainRizvi/git-workflow-guards",
+      "role": "borrowed idea + name collision",
+      "files": [
+        "skills/ratchet-harness/SKILL.md"
+      ],
+      "_where": "references/prior-art.md:24"
+    },
+    {
+      "type": "github-repo",
+      "repo": "ace-agent/ace",
+      "role": "borrowed idea",
+      "files": [
+        "ace/prompts/curator.py",
+        "ace/prompts/reflector.py"
+      ],
+      "_where": "references/prior-art.md:19"
+    },
+    {
+      "type": "github-repo",
+      "repo": "affaan-m/ECC",
+      "role": "partial",
+      "files": [
+        "skills/continuous-learning-v2/agents/observer.md"
+      ],
+      "_where": "references/prior-art.md:17"
+    },
+    {
+      "type": "github-repo",
+      "repo": "alibaba/skill-up",
+      "role": "adjacent",
+      "_where": "references/prior-art.md:25"
+    },
+    {
+      "type": "github-repo",
+      "repo": "gepa-ai/gepa",
+      "role": "borrowed idea",
+      "files": [
+        "src/gepa/strategies/acceptance.py",
+        "src/gepa/strategies/instruction_proposal.py"
+      ],
+      "_where": "references/prior-art.md:20"
+    },
+    {
+      "type": "github-repo",
+      "repo": "kayba-ai/agentic-context-engine",
+      "role": "borrowed idea",
+      "files": [
+        "ace/core/skillbook.py",
+        "ace/deduplication/prompts.py",
+        "ace/implementations/prompts.py"
+      ],
+      "_where": "references/prior-art.md:18"
+    },
+    {
+      "type": "github-repo",
+      "repo": "rohitg00/pro-workflow",
+      "role": "direct match (apply)",
+      "files": [
+        "skills/skill-optimizer/SKILL.md"
+      ],
+      "_where": "references/prior-art.md:14"
+    },
+    {
+      "type": "github-repo",
+      "repo": "selftune-dev/selftune",
+      "role": "partial",
+      "files": [
+        "packages/runtime/evolution/rollback.ts",
+        "packages/runtime/evolution/validate-proposal.ts"
+      ],
+      "_where": "references/prior-art.md:16"
+    },
+    {
+      "type": "command",
+      "id": "notes-selftest",
+      "run": "python scripts/notes.py selftest",
+      "why": "the notes engine still works"
+    },
+    {
+      "type": "skill",
+      "name": "rotless-skill-creator",
+      "files": [
+        "scripts/run_case.py",
+        "scripts/run_eval.py",
+        "scripts/quick_validate.py"
+      ],
+      "mustContain": [
+        "Step 4: Test cases",
+        "run_case.py"
+      ],
+      "why": "behaviour checks use its test-case format and run_case.py"
+    },
+    {
+      "type": "skill",
+      "name": "rotless-skill-modernizer",
+      "files": [
+        "scripts/keeper.py"
+      ],
+      "mustContain": [
+        "fix <skill>",
+        "Claim checks"
+      ],
+      "why": "stale facts go to its fix; guard claims live in keeper.json and run in its check"
+    },
+    {
+      "type": "skill",
+      "name": "rotless-github-research",
+      "mustContain": [
+        "Verdict"
+      ],
+      "why": "better-way lessons are checked against prior art"
+    },
+    {
+      "type": "doc",
+      "id": "doc:skill-misevolution",
+      "url": "https://arxiv.org/abs/2608.12851",
+      "why": "the safety-scan rule cites its finding that every tested skill-evolution method wrote unsafe skills"
+    }
+  ],
+  "claims": [],
+  "ignore": [
+    "claude",
+    "code search 10/min",
+    "python",
+    "python3"
+  ],
+  "landscape": {
+    "searches": [
+      {
+        "name": "rotless-skill-refiner-space",
+        "queries": [
+          "self-improving skills",
+          "self-evolving skills",
+          "learn from corrections",
+          "skill evolution",
+          "claude reflect",
+          "agentic context engineering",
+          "filename:SKILL.md \"learn from corrections\"",
+          "filename:SKILL.md \"retrospective\" \"update the skill\""
+        ],
+        "windowDays": 180,
+        "minStars": 1,
+        "_from": "references/prior-art.md"
+      }
+    ]
+  },
+  "priorArt": {
+    "verdict": "Build. The space is saturated with capture-and-memory tools, but none turns one observed gap into a patch to the skill itself plus a regression check for that gap, behind a human gate, without hooks",
+    "file": "references/prior-art.md"
+  },
+  "_ignoreWhy": {
+    "python": "runtime, not a versioned dependency",
+    "python3": "runtime alias",
+    "claude": "named in prior-art.md (claude-reflect), not a CLI this skill runs",
+    "code search 10/min": "prior-art ledger note about the research run, not a claim the skill makes"
+  }
+}

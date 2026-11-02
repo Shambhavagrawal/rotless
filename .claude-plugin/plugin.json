@@ -1,0 +1,20 @@
+{
+  "name": "rotless",
+  "description": "Agent skills that don't rot: research prior art, build and test skills on any agent, catch drift when the outside world changes, and turn lessons from real use into checked improvements.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Shambhav Agrawal"
+  },
+  "homepage": "https://github.com/Shambhavagrawal/rotless",
+  "repository": "https://github.com/Shambhavagrawal/rotless",
+  "license": "MIT AND Apache-2.0",
+  "keywords": [
+    "skills",
+    "agent-skills",
+    "skill-authoring",
+    "skill-creator",
+    "prior-art",
+    "drift-detection",
+    "self-improving"
+  ]
+}

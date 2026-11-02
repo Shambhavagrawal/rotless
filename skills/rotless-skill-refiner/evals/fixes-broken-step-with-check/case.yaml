@@ -1,0 +1,9 @@
+schema_version: "1.1"
+name: fixes-broken-step-with-check
+expected_outcome: |
+  The agent treats this as a lesson for the user's own skill: it records the gap, proposes a small
+  fix to toy-search, adds a check that would have caught the broken step (and shows it failing on
+  the old skill), and asks the user to approve before changing toy-search, instead of silently
+  editing the skill.
+context:
+  scaffold_script: place-files.sh

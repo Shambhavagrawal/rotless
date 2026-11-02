@@ -1,0 +1,202 @@
+{
+  "skill": "rotless-skill-creator",
+  "verified": {
+    "date": "2026-11-02",
+    "note": "codex-cli 0.166.0 installed; harness probe passes (loads project skills headlessly); claude 2.1.316 probe passes"
+  },
+  "deps": [
+    {
+      "type": "github-repo",
+      "repo": "agentskills/agentskills",
+      "role": "borrowed idea",
+      "files": [
+        "skills-ref/src/skills_ref/validator.py"
+      ],
+      "_where": "references/prior-art.md:17"
+    },
+    {
+      "type": "github-repo",
+      "repo": "alibaba/skill-up",
+      "role": "adjacent",
+      "_where": "references/prior-art.md:19"
+    },
+    {
+      "type": "github-repo",
+      "repo": "anthropics/skills",
+      "role": "upstream we forked (Apache-2.0); watch it to port fixes",
+      "files": [
+        "skills/skill-creator/SKILL.md",
+        "skills/skill-creator/references/schemas.md",
+        "skills/skill-creator/agents/grader.md",
+        "skills/skill-creator/eval-viewer/generate_review.py",
+        "skills/skill-creator/scripts/aggregate_benchmark.py"
+      ],
+      "_where": "references/prior-art.md:13"
+    },
+    {
+      "type": "github-repo",
+      "repo": "antongulin/opencode-skill-creator",
+      "role": "adjacent (port)",
+      "files": [
+        "plugin/lib/run-eval.ts"
+      ],
+      "_where": "references/prior-art.md:16"
+    },
+    {
+      "type": "github-repo",
+      "repo": "obra/superpowers",
+      "role": "borrowed idea",
+      "files": [
+        "skills/writing-skills/SKILL.md"
+      ],
+      "_where": "references/prior-art.md:15"
+    },
+    {
+      "type": "github-repo",
+      "repo": "openai/skills",
+      "role": "direct match",
+      "files": [
+        "skills/.system/skill-creator/scripts/init_skill.py"
+      ],
+      "_where": "references/prior-art.md:14"
+    },
+    {
+      "type": "github-repo",
+      "repo": "rpamis/comet",
+      "role": "adjacent",
+      "_where": "references/prior-art.md:20"
+    },
+    {
+      "type": "github-repo",
+      "repo": "tripleyak/SkillForge",
+      "role": "partial",
+      "files": [
+        "scripts/run_skill_evals.py"
+      ],
+      "_where": "references/prior-art.md:18"
+    },
+    {
+      "type": "cli",
+      "name": "claude",
+      "tested": "2.1.316",
+      "upstream": "github:anthropics/claude-code",
+      "needs": [
+        "plugin eval"
+      ],
+      "why": "headless runs in harness.py: claude -p --output-format text, --permission-mode acceptEdits"
+    },
+    {
+      "type": "cli",
+      "name": "codex",
+      "tested": "rust-v0.166.0",
+      "upstream": "github:openai/codex",
+      "needs": [
+        "exec"
+      ],
+      "why": "headless runs in harness.py: codex exec --skip-git-repo-check --ephemeral -, -s workspace-write"
+    },
+    {
+      "type": "skill",
+      "name": "rotless-github-research",
+      "mustContain": [
+        "Verdict",
+        "Source ledger"
+      ],
+      "why": "step 0 prior art"
+    },
+    {
+      "type": "skill",
+      "name": "rotless-skill-modernizer",
+      "files": [
+        "scripts/keeper.py"
+      ],
+      "mustContain": [
+        "init <skill-dir>",
+        "prior-art.md"
+      ],
+      "why": "step 8 init and check; owns the prior-art.md shape"
+    },
+    {
+      "type": "skill",
+      "name": "rotless-skill-refiner",
+      "files": [
+        "scripts/notes.py"
+      ],
+      "mustContain": [
+        "Field notes",
+        "The retro"
+      ],
+      "why": "the footer every new skill gets calls its notes.py"
+    },
+    {
+      "type": "doc",
+      "id": "doc:agentskills-spec",
+      "url": "https://agentskills.io/specification",
+      "why": "portable frontmatter fields and limits enforced by quick_validate.py"
+    },
+    {
+      "type": "command",
+      "id": "self-validate",
+      "run": "python scripts/quick_validate.py . --strict",
+      "why": "the skill passes its own spec and portability checks"
+    },
+    {
+      "type": "command",
+      "id": "lesson-runner-checks",
+      "run": "python scripts/test_harness.py",
+      "why": "lessons L-2026-11-02-2..4: shortened canary still detected, failed runs keep stderr, run_case keeps registry files"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claude-headless-flags",
+      "quote": "Claude Code (claude -p)",
+      "check": {
+        "run": "claude --help",
+        "regex": "--permission-mode[\\s\\S]*--print|--print[\\s\\S]*--permission-mode"
+      },
+      "why": "harness.py relies on -p and --permission-mode acceptEdits"
+    },
+    {
+      "id": "codex-headless-flags",
+      "quote": "Codex (codex exec)",
+      "check": {
+        "run": "codex exec --help",
+        "regex": "--skip-git-repo-check[\\s\\S]*--ephemeral"
+      },
+      "why": "harness.py relies on --skip-git-repo-check, --ephemeral and stdin prompts"
+    }
+  ],
+  "ignore": [
+    "code search hit its 10/min",
+    "python",
+    "python3"
+  ],
+  "landscape": {
+    "searches": [
+      {
+        "name": "rotless-skill-creator-space",
+        "queries": [
+          "skill creator",
+          "skill-creator",
+          "skill authoring",
+          "topic:skill-creator",
+          "filename:SKILL.md \"name: skill-creator\"",
+          "filename:SKILL.md \"name: writing-skills\""
+        ],
+        "windowDays": 180,
+        "minStars": 1,
+        "_from": "references/prior-art.md"
+      }
+    ]
+  },
+  "priorArt": {
+    "verdict": "Fork & adapt anthropics/skills skill-creator (Apache-2.0) behind a per-agent runner adapter; blend in superpowers' RED gate and spec validation",
+    "file": "references/prior-art.md"
+  },
+  "_ignoreWhy": {
+    "python": "runtime, not a versioned dependency",
+    "python3": "runtime alias",
+    "code search hit its 10/min": "prior-art ledger note about the research run, not a claim the skill makes"
+  }
+}

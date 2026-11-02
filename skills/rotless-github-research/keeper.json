@@ -1,0 +1,365 @@
+{
+  "skill": "rotless-github-research",
+  "verified": {
+    "date": "2026-11-02",
+    "note": "gh 2.103.3; selftest --quick passes; agent-agnostic wording, argument-hint removed"
+  },
+  "deps": [
+    {
+      "type": "cli",
+      "name": "gh",
+      "tested": "2.103.3",
+      "upstream": "github:cli/cli",
+      "needs": [
+        "api",
+        "discussion list",
+        "extension list",
+        "extension search",
+        "issue list",
+        "release list",
+        "repo clone",
+        "repo list",
+        "repo read-dir",
+        "repo read-file",
+        "search code",
+        "search commits",
+        "search issues",
+        "search repos",
+        "skill search"
+      ]
+    },
+    {
+      "type": "command",
+      "id": "selftest",
+      "run": "python scripts/selftest.py --quick --json",
+      "why": "the skill's own canaries for its gh search rules and its scripts (endpoint shapes are checked below, declaratively)"
+    },
+    {
+      "type": "mcp",
+      "url": "https://mcp.grep.app",
+      "expectTools": {
+        "searchGitHub": [
+          "query",
+          "useRegexp",
+          "language",
+          "path",
+          "repo",
+          "matchCase",
+          "matchWholeWords"
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "id": "npm",
+      "url": "https://registry.npmjs.org/-/v1/search?text=kubernetes&size=1",
+      "expect": {
+        "jsonPaths": [
+          "total",
+          "objects[].package.name",
+          "objects[].package.links"
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "id": "crates",
+      "url": "https://crates.io/api/v1/crates?q=kubernetes&per_page=1",
+      "expect": {
+        "jsonPaths": [
+          "meta.total",
+          "crates[].name",
+          "crates[].updated_at"
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "id": "mcp-registry",
+      "url": "https://registry.modelcontextprotocol.io/v0/servers?search=github&limit=1",
+      "expect": {
+        "jsonPaths": [
+          "servers[].server.name"
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "id": "skills.sh",
+      "url": "https://skills.sh/api/search?q=github",
+      "expect": {
+        "jsonPaths": [
+          "skills[].source",
+          "skills[].skillId"
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "id": "hn",
+      "url": "https://hn.algolia.com/api/v1/search?query=github&tags=story&hitsPerPage=1",
+      "expect": {
+        "jsonPaths": [
+          "nbHits",
+          "hits[].title",
+          "hits[].objectID"
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "id": "gitlab",
+      "url": "https://gitlab.com/api/v4/projects?search=kubernetes&per_page=1",
+      "expect": {
+        "jsonPaths": [
+          "[].path_with_namespace",
+          "[].last_activity_at"
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "id": "codeberg",
+      "url": "https://codeberg.org/api/v1/repos/search?q=kubernetes&limit=1",
+      "expect": {
+        "jsonPaths": [
+          "data[].full_name"
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "id": "hf-models",
+      "url": "https://huggingface.co/api/models?search=bert&limit=1",
+      "expect": {
+        "jsonPaths": [
+          "[].id"
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "id": "dockerhub",
+      "url": "https://hub.docker.com/v2/search/repositories/?query=kubernetes&page_size=1",
+      "expect": {
+        "jsonPaths": [
+          "count",
+          "results[].repo_name"
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "id": "openvsx",
+      "url": "https://open-vsx.org/api/-/search?query=kubernetes&size=1",
+      "expect": {
+        "jsonPaths": [
+          "totalSize",
+          "extensions[].namespace"
+        ]
+      }
+    },
+    {
+      "type": "github-repo",
+      "repo": "bgauryy/octocode",
+      "role": "code research platform; research rubric idea",
+      "files": [
+        "skills/octocode-research/references/github-landscape.md"
+      ]
+    },
+    {
+      "type": "github-repo",
+      "repo": "zamalali/DeepGit",
+      "role": "requirements-first discovery agent",
+      "files": [
+        "src/deepgit/retrieval/signals.py",
+        "src/deepgit/reasoning/signatures.py"
+      ]
+    },
+    {
+      "type": "github-repo",
+      "repo": "r14dd/patent",
+      "role": "closest competitor; verdict scale + stale flag ideas",
+      "files": [
+        "README.md",
+        "src/verdict.rs"
+      ]
+    },
+    {
+      "type": "github-repo",
+      "repo": "Fectivnfy112357/github-explore",
+      "role": "gh-wrapper discovery skill",
+      "files": [
+        "skills/github-explore/scripts/explore.py",
+        "skills/github-explore/scripts/find_similar.py"
+      ]
+    },
+    {
+      "type": "github-repo",
+      "repo": "iagochavarry/who-built-this-before-me",
+      "role": "verdict vocabulary; recall-check anchor",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "type": "github-repo",
+      "repo": "nohseongmin/claude-skill-finder",
+      "role": "trust boundary, local-first ideas",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "type": "github-repo",
+      "repo": "default-anton/pi-librarian",
+      "role": "subagent turn budget idea"
+    },
+    {
+      "type": "github-repo",
+      "repo": "jmbowman/agentic_development",
+      "role": "per-source ledger, absence rules",
+      "files": [
+        "skills/prior-art-search/SKILL.md"
+      ]
+    },
+    {
+      "type": "github-repo",
+      "repo": "mvpbin/github-project-miner",
+      "role": "commit-pinned evidence",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "type": "github-repo",
+      "repo": "JoanAbad82/github-hidden-gems",
+      "role": "noise-rejection signals",
+      "files": [
+        "src/hidden_gems/filtering/rules.py"
+      ]
+    },
+    {
+      "type": "github-repo",
+      "repo": "Panther114/RepoRadar",
+      "role": "sort-variant fusion, topic pairs"
+    },
+    {
+      "type": "github-repo",
+      "repo": "bytedance/deer-flow",
+      "role": "hosts github-deep-research skill",
+      "files": [
+        "skills/public/github-deep-research/SKILL.md"
+      ]
+    },
+    {
+      "type": "github-repo",
+      "repo": "microsoft/semantic-link-labs",
+      "role": "hosts github-repo-explore skill",
+      "files": [
+        ".claude/skills/github-repo-explore/SKILL.md"
+      ]
+    },
+    {
+      "type": "github-repo",
+      "repo": "lingzhi227/agent-research-skills",
+      "role": "same skill name: would overwrite ours if installed",
+      "files": [
+        "skills/github-research/SKILL.md"
+      ]
+    },
+    {
+      "type": "github-repo",
+      "repo": "github/github-mcp-server",
+      "role": "official GitHub MCP: watch for discovery features"
+    },
+    {
+      "type": "http",
+      "id": "rubygems",
+      "url": "https://rubygems.org/api/v1/search.json?query=rails",
+      "expect": {
+        "jsonPaths": [
+          "[].name"
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "id": "hf-papers",
+      "url": "https://huggingface.co/api/papers/search?q=retrieval",
+      "expect": {
+        "jsonPaths": [
+          "[]"
+        ]
+      }
+    }
+  ],
+  "claims": [
+    {
+      "id": "search-limit",
+      "quote": "search 30/min",
+      "check": {
+        "gh": "rate_limit",
+        "jsonPath": "resources.search.limit",
+        "equals": 30
+      }
+    },
+    {
+      "id": "code-search-limit",
+      "quote": "code search 10/min",
+      "check": {
+        "gh": "rate_limit",
+        "jsonPath": "resources.code_search.limit",
+        "equals": 10
+      }
+    },
+    {
+      "id": "graphql-quota",
+      "quote": "GraphQL 5000 pts/hr",
+      "check": {
+        "gh": "rate_limit",
+        "jsonPath": "resources.graphql.limit",
+        "equals": 5000
+      }
+    },
+    {
+      "id": "skill-search-quota",
+      "quote": "code-search quota (10/min",
+      "check": {
+        "gh": "rate_limit",
+        "jsonPath": "resources.code_search.limit",
+        "equals": 10
+      }
+    }
+  ],
+  "landscape": {
+    "searches": [
+      {
+        "name": "agent-github-research",
+        "why": "new tools in this skill's own space",
+        "queries": [
+          "github research skill",
+          "github repo discovery agent",
+          "prior art search github",
+          "find similar repositories",
+          "topic:repository-discovery",
+          "topic:prior-art"
+        ],
+        "must": "github|repositor|\\brepos?\\b",
+        "exclude": "patent|trading|medical|clinical|anime|crypto",
+        "windowDays": 180,
+        "minStars": 3
+      }
+    ]
+  },
+  "ignore": [
+    "python",
+    "claude",
+    "https://pypi.org/pypi"
+  ],
+  "_ignoreWhy": {
+    "python": "runtime for the scripts, not a versioned dependency",
+    "claude": "`claude mcp add` is an optional convenience the skill mentions",
+    "https://pypi.org/pypi": "per-package JSON (no search API); covered by WebSearch guidance"
+  }
+}
