@@ -213,8 +213,8 @@
     "code search 10/min": "prior-art ledger note about the research run, not a claim the skill makes"
   },
   "updated": {
-    "date": "2026-11-02",
-    "note": "footer reminder through keeper.py status (modernizer L-2026-11-02-16); 20-query trigger set"
+    "date": "2026-11-03",
+    "note": "L-2026-11-03-4: stats says when nothing is logged"
   },
   "checked": "2026-11-02"
 }

@@ -139,6 +139,9 @@ def cmd_list(a):
 
 def cmd_stats(a):
     skills = [Path(a.skill).name] if a.skill else all_skills()
+    if not skills:  # silence looked like a broken install (L-2026-11-03-4)
+        print(f"no field notes yet (looked in {registry() / 'notes'})")
+        return 0
     for s in skills:
         notes = load(s)
         open_ = [n for n in notes if n["status"] == "open"]
@@ -205,6 +208,12 @@ def cmd_selftest(_):
         sk.mkdir()
         (sk / "SKILL.md").write_text("---\nname: toy-skill\ndescription: x\n---\nbody\n", encoding="utf-8")
         assert "optimization" in KINDS and "confirmed" in KINDS
+        import contextlib
+        import io
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            cmd_stats(argparse.Namespace(skill=None))
+        assert "no field notes yet" in buf.getvalue(), "stats must say so when nothing is logged (L-2026-11-03-4)"
         ns = argparse.Namespace(skill=str(sk), kind="failure", where="SKILL.md:4", what="step failed",
                                 evidence="token=abc123 and ghp_" + "a" * 30 + " and api_key: 'zzz'", expected="", agent="codex")
         assert cmd_add(ns) == 0
@@ -226,7 +235,7 @@ def cmd_selftest(_):
         assert cmd_snapshot(argparse.Namespace(skill=str(sk))) == 0 and any(snap.rglob("SKILL.md"))
         assert cmd_snapshot(argparse.Namespace(skill=str(sk))) == 0  # twice in the same second
         assert not any(snap.rglob(".git")), "snapshots must skip .git"
-        print("selftest: 11 checks passed")
+        print("selftest: 12 checks passed")
         return 0
     finally:
         if old is None:

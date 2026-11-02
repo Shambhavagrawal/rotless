@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `notes.py stats` says "no field notes yet" instead of printing nothing, which looked like a broken install.
 - rotless-skill-creator step 7: trigger queries must not hand the agent a file to open, since trigger runs get none; the creator's own trigger set now passes 20/20 on Claude Code.
 
 ## 0.2.0 (2026-11-02)
