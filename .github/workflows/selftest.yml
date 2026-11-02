@@ -1,0 +1,25 @@
+name: selftest
+on: [push, pull_request]
+
+jobs:
+  offline:
+    # The checks that need no network and no agent CLI. Network checks (keeper.py check,
+    # github-research selftest) and agent runs stay local: they need tokens and quota.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.10", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Self-tests and lesson checks
+        shell: bash
+        run: |
+          python skills/rotless-skill-refiner/scripts/notes.py selftest
+          python skills/rotless-skill-creator/scripts/test_harness.py
+          python skills/rotless-skill-modernizer/scripts/test_cli_shims.py
+          for s in skills/*/; do python skills/rotless-skill-creator/scripts/quick_validate.py "$s" --strict; done

@@ -1,0 +1,10 @@
+[
+ {"query": "turn what we just did into a skill so I don't have to explain these deploy steps every time", "should_trigger": true},
+ {"query": "my changelog skill never kicks in when I say 'release notes', can you fix its description so it triggers", "should_trigger": true},
+ {"query": "write a skill for codex that formats our SQL migrations the house way, and test it on a couple of real migrations", "should_trigger": true},
+ {"query": "benchmark my pdf-invoices skill with and without it on these three invoices and show me the difference", "should_trigger": true},
+ {"query": "create a GitHub Action that runs our pytest suite on every pull request", "should_trigger": false},
+ {"query": "can you check my skills, I haven't looked at them in a month", "should_trigger": false},
+ {"query": "ugh, my pdf-invoices skill mangled the tables again, make sure it stops happening", "should_trigger": false},
+ {"query": "write a python function that parses dates like 03/11/2026 and 2026-11-03", "should_trigger": false}
+]

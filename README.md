@@ -1,5 +1,7 @@
 # rotless
 
+[![selftest](https://github.com/Shambhavagrawal/rotless/actions/workflows/selftest.yml/badge.svg)](https://github.com/Shambhavagrawal/rotless/actions/workflows/selftest.yml)
+
 **Agent skills rot.** A skill says "`gh search code` allows 10 requests a minute", "call this endpoint", "use this flag". Then the CLI ships a new version, the API changes shape, a step quietly stops working, and the skill keeps confidently telling your agent things that are no longer true. And every time you learn something while using it, a fix or a faster way, the lesson dies with that conversation.
 
 rotless is four [Agent Skills](https://agentskills.io) that build skills which stay true, and get better every time they're used:
@@ -36,7 +38,7 @@ Claude Code plugin:
 
 Or copy `skills/*` into your agent's skills folder (`~/.agents/skills/`, `~/.claude/skills/`, `~/.codex/skills/`…).
 
-**Requires** Python 3 and the [GitHub CLI](https://cli.github.com) logged in (`gh auth login`). Test runs on other agents use their own CLIs (`claude`, `codex`…) if installed.
+**Requires** Python 3.10+ (standard library only) and the [GitHub CLI](https://cli.github.com) logged in (`gh auth login`). Test runs on other agents use their own CLIs (`claude`, `codex`…) if installed.
 
 ## Turn on the flow
 

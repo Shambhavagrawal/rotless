@@ -1,0 +1,10 @@
+[
+ {"query": "is there anything on github that already does OCR for indian GST invoices? don't want to build it if someone has", "should_trigger": true},
+ {"query": "find me open source alternatives to pdfplumber that cope with scanned PDFs, and tell me which ones are still maintained", "should_trigger": true},
+ {"query": "has anyone built a scraper or telegram bot for sarkari result job notifications? I want to borrow the parsing bits", "should_trigger": true},
+ {"query": "deep dive github.com/BayramAnnakov/claude-reflect for me: is it maintained, what do the issues say breaks", "should_trigger": true},
+ {"query": "search this codebase for where we parse invoice dates, I think it's somewhere under src/billing", "should_trigger": false},
+ {"query": "how do I open a pull request from the terminal with gh", "should_trigger": false},
+ {"query": "what's new in the latest react release", "should_trigger": false},
+ {"query": "can you check my skills, I haven't looked at them in a month", "should_trigger": false}
+]
