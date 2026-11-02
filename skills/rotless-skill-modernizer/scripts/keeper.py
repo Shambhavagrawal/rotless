@@ -383,6 +383,9 @@ def chk_mcp(d, prev):
     cid = d.get("id") or f"mcp:{d['url']}"
     try:
         status, body = http(d["url"], {"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
+        if status != 200:
+            return [result(cid, "WARN" if transient(status) else "FAIL", f"tools/list: HTTP {status} from {d['url']}",
+                           "rerun later" if transient(status) else "the server moved or changed: find its new URL")]
         tools = {t["name"]: t for t in sse_json(body)["result"]["tools"]}
     except Exception as e:
         return [result(cid, "WARN", f"tools/list failed: {type(e).__name__}: {str(e)[:80]}", "rerun; flaky servers happen")]
@@ -538,6 +541,8 @@ def chk_claim(c, texts, skill_dir):
             vals = json_path(gh_json(chk["gh"]), chk["jsonPath"])
         elif "http" in chk:
             status, body = http(chk["http"])
+            if transient(status):  # an outage proves nothing about the claim (lesson L-2026-11-02-11)
+                return out + [result(cid, "WARN", f"HTTP {status} from {chk['http']}: the server is down or rate-limiting", "rerun later", where)]
             vals = json_path(sse_json(body), chk["jsonPath"])
         elif "run" in chk:
             code, so, se = run(shlex.split(chk["run"]), cwd=skill_dir)
@@ -735,7 +740,20 @@ INLINE_SUB = re.compile(r"`(gh|claude|npx)\s+([a-z][\w-]*)(?:\s+([a-z][\w-]*))?"
 REPO = re.compile(r"`([A-Za-z0-9][\w.-]*/[\w.-]+)`")
 VERSIONED = re.compile(r"\b(gh|git|node|python|npm|claude)\s+v?(\d+\.\d+(?:\.\d+)?)\b", re.I)
 LIMIT = re.compile(r"(?:[\w/-]+[ \t]+){0,4}[(\"“]?\d+\s*(?:/|per\s)(?:min|minute|hour|hr|day|s)\b", re.I)
-EXAMPLE_BLOCK = re.compile(r"```(?:json|jsonc|yaml|yml|toml)\n.*?```", re.S)
+# Fenced blocks that aren't shell: data and templates, or diagrams. Blanked before parsing, line numbers kept
+# (lesson L-2026-11-02-9: a markdown table became CLIs `repo`, `last`, `license`).
+FENCED = re.compile(r"^[ \t]*```[ \t]*([\w+-]*)[^\n]*\n(.*?)^[ \t]*```", re.S | re.M)
+NON_SHELL = {"json", "jsonc", "yaml", "yml", "toml", "markdown", "md", "text", "txt", "python", "py", "diff", "html",
+             "xml", "csv", "js", "javascript", "ts", "typescript"}
+DIAGRAM = re.compile(r"[\u2500-\u257f\u25b2-\u25c4\u2190-\u21ff]")  # box drawing, triangles, arrows
+PIPE_SPLIT = re.compile(r"\s*(?:\|\||&&|;)\s*|\s+\|\s+")  # a lone | needs spaces: `--kind a|b` is one argument
+
+
+def strip_examples(text):
+    def blank(m):
+        skip = m.group(1).lower() in NON_SHELL or DIAGRAM.search(m.group(2))
+        return "\n" * m.group(0).count("\n") if skip else m.group(0)
+    return FENCED.sub(blank, text)
 NOT_CLI = {"cd", "echo", "export", "for", "do", "done", "if", "then", "fi", "set", "cat", "ls", "grep", "sed", "awk", "head",
            "tail", "cut", "sort", "uniq", "tr", "xargs", "rm", "mkdir", "cp", "mv", "true", "false", "test", "while", "time", "sleep"}
 SUBCMD_TOOLS = ("gh", "claude", "npx", "git", "docker", "kubectl")
@@ -766,7 +784,7 @@ def extract(skill_dir):
     count = {}
     for f in files:
         rel = f.relative_to(skill_dir).as_posix()
-        text = EXAMPLE_BLOCK.sub(lambda m: "\n" * m.group(0).count("\n"), f.read_text(encoding="utf-8", errors="replace"))
+        text = strip_examples(f.read_text(encoding="utf-8", errors="replace"))
         in_code = False
         for i, line in enumerate(text.splitlines(), 1):
             loc = f"{rel}:{i}"
@@ -775,8 +793,9 @@ def extract(skill_dir):
                 continue
             if in_code:
                 cmd = re.sub(r"^\s*(\$|>)\s*", "", line).strip()
-                if cmd and not cmd.startswith("#") and "=" not in cmd.split(" ")[0]:
-                    for seg in re.split(r"\s*(?:\|\||&&|\||;)\s*", cmd):
+                cmd = re.sub(r"(^|\s)#.*$", "", cmd).strip()  # shell comments are prose
+                if cmd and not cmd.startswith("|") and "=" not in cmd.split(" ")[0]:
+                    for seg in PIPE_SPLIT.split(cmd):
                         toks = seg.split()
                         tool = toks[0].strip("(") if toks else ""
                         if not tool or tool in NOT_CLI or tool.startswith("-") or not re.fullmatch(r"[A-Za-z][\w.-]*", tool):
@@ -883,9 +902,9 @@ def coverage(man, ref, offline=False):
         if tested and have[:len(said)] != said:
             out.append(result(f"gap:version:{tool}", "GAP", f"the text says {tool} {v}, keeper.json says it was verified on {tested}",
                               "one of them is stale: update the text or `tested`", loc))
-    quotes = [c["quote"].lower() for c in man.get("claims", [])]
+    quotes = [norm_text(c["quote"]) for c in man.get("claims", [])]  # same normalisation as chk_claim (L-2026-11-02-10)
     for phrase, loc in ref["limit"].items():
-        p = phrase.lower()
+        p = norm_text(phrase)
         if not ignored(phrase) and not any(q in p or p in q for q in quotes):
             out.append(result(f"gap:claim:{phrase[:40]}", "GAP", f"the text states a limit no claim checks: “{phrase}”",
                               "add a claim with a check, or ignore it", loc))

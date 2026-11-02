@@ -19,7 +19,8 @@ Changes made by rotless contributors:
   (they required `claude -p`; the agent now proposes descriptions itself in SKILL.md step 7).
 - scripts/quick_validate.py: no PyYAML dependency; name must match its folder; metadata must be
   a mapping; portability warnings.
-- scripts/utils.py: UTF-8 file encoding; unescapes quoted YAML values.
+- scripts/utils.py: UTF-8 file encoding; holds the one frontmatter parser that quick_validate.py and the
+  runners share (unescapes quoted YAML values).
 - scripts/package_skill.py, scripts/aggregate_benchmark.py,
   eval-viewer/generate_review.py: UTF-8 file encoding (Windows), agent-neutral wording.
 

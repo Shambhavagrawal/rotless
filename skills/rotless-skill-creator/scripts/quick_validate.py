@@ -9,10 +9,14 @@ strings, plus non-fatal portability warnings (Claude-only tool names, paths and 
 
 Exit 0 when valid (warnings don't fail unless --strict), 1 otherwise.
 """
-import json
 import re
 import sys
 from pathlib import Path
+
+try:  # run as a script (scripts/ on sys.path) or imported as scripts.quick_validate
+    from utils import parse_frontmatter
+except ImportError:
+    from scripts.utils import parse_frontmatter
 
 EXCLUDED_DIR_PARTS = {'__pycache__', 'node_modules'}
 ROOT_EXCLUDED_DIR_PARTS = {'evals'}
@@ -32,19 +36,6 @@ PORTABILITY = [
 OTHER_AGENTS = re.compile(r"codex|gemini|cursor|copilot|opencode|AGENTS\.md|other agents|any agent|e\.g\.|optional", re.I)
 
 
-def unquote(v):
-    """A YAML scalar as written: unescape double quotes the way YAML does (JSON-compatible) and '' in single quotes."""
-    v = v.strip()
-    if len(v) >= 2 and v[0] == v[-1] == '"':
-        try:
-            return json.loads(v)
-        except ValueError:
-            return v[1:-1]
-    if len(v) >= 2 and v[0] == v[-1] == "'":
-        return v[1:-1].replace("''", "'")
-    return v
-
-
 # YAML would read these as numbers, booleans, null, lists or maps, not strings
 NON_STRING = re.compile(r'^(true|false|yes|no|on|off|null|~|[-+]?\d+(\.\d+)?|\[.*\]|\{.*\})$', re.I)
 
@@ -52,33 +43,6 @@ NON_STRING = re.compile(r'^(true|false|yes|no|on|off|null|~|[-+]?\d+(\.\d+)?|\[.
 def counts_as_skill_md(rel):
     parts = rel.parts[:-1]
     return not any(p in EXCLUDED_DIR_PARTS for p in parts) and not (parts and parts[0] in ROOT_EXCLUDED_DIR_PARTS)
-
-
-def parse_frontmatter(text):
-    """Top-level keys of a YAML frontmatter block, without PyYAML. Values: str, or dict for mappings."""
-    m = re.match(r'^---\r?\n(.*?)\r?\n---', text, re.S)
-    if not m:
-        return None, text
-    fm, key = {}, None
-    for line in m.group(1).splitlines():
-        top = re.match(r'^([A-Za-z][\w-]*):\s*(.*)$', line)
-        if top:
-            key, val = top.group(1), top.group(2).strip()
-            # only metadata is a mapping; any other key with its value on the next lines is a string
-            # (a description line like 'Use this when: …' must not turn into a map; lesson L-2026-11-02-6)
-            fm[key] = ({} if key == 'metadata' else '') if val == '' else val
-        elif key is not None and line[:1] in (' ', '\t') and line.strip():
-            sub = re.match(r'^\s+([\w.-]+):\s*(.*)$', line)
-            if isinstance(fm[key], dict) and sub:
-                fm[key][sub.group(1)] = sub.group(2).strip()
-            elif isinstance(fm[key], str):
-                fm[key] = (fm[key] + ' ' + line.strip()).strip()
-    for k, v in fm.items():
-        if isinstance(v, str):
-            if v in ('>', '|', '>-', '|-'):
-                fm[k] = ''
-            fm[k] = unquote(re.sub(r'^([>|]-?)\s+', '', fm[k]).strip())
-    return fm, text[m.end():]
 
 
 def validate_skill(skill_path):

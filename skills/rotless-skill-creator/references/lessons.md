@@ -55,3 +55,9 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `scripts/make_eval_review.py` HTML-escapes name and description and writes `<` as \u003c inside the script block, in one pass; SKILL.md step 7 uses it
 - Check: scripts/test_harness.py L-10
 - Why: replacing the placeholders by hand let a query containing `</script>` break the page
+
+## L-2026-11-02-11: one frontmatter parser for the validator and the runners
+- From: external code review (Gemini), round 3, 2026-11-02 · verdict: fix
+- Change: Start: `parse_frontmatter()` and `unquote()` live in utils.py; quick_validate.py imports them; `parse_skill_md()` uses them | Stop: the separate line-by-line parser in utils.py
+- Check: scripts/test_harness.py L-11 (red on snapshot 20261102-184045, green after)
+- Why: after L-6 the validator accepted a description written on the next line, but `run_eval.py` and `make_eval_review.py` read it as empty

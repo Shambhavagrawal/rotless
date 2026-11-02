@@ -105,8 +105,38 @@ for code, want in ((503, "WARN"), (429, "WARN"), (404, "FAIL")):
         fails.append(f"L-8: HTTP {code} must be {want} (api check gave {got}, doc check gave {got_doc})")
 keeper.http = real_http
 
+# L-9: extract() only reads shell commands: not markdown/text templates, tables, diagrams, comments or a|b flag values
+ex = tmp / "extract-skill"
+ex.mkdir()
+fence = "`" * 3
+(ex / "SKILL.md").write_text("\n".join([
+    "---", "name: extract-skill", "description: x", "---",
+    fence + "markdown", "| repo | role | last substantive commit | license |", "|---|---|---|---|", fence,
+    fence, "idea ─► research ─► create", "your skill/      keeper.py", fence,
+    fence + "bash", "gh search code foo   # relevance filter; homonyms drag in noise",
+    "python notes.py add x --kind failure|correction|workaround", fence, ""]), encoding="utf-8")
+clis = set(keeper.extract(ex)[0]["cli"])
+if clis - {"gh", "python"}:
+    fails.append(f"L-9: extract() took non-commands for CLIs: {sorted(clis - {'gh', 'python'})}")
+
+# L-10: coverage() normalises claim quotes like chk_claim, so a backticked quote covers its limit
+cov = keeper.coverage({"claims": [{"id": "l", "quote": "`search` 30/min"}]},
+                      {"cli": {}, "sub": {}, "url": {}, "repo": {}, "version": {}, "limit": {"search 30/min": "SKILL.md:1"}}, offline=True)
+if any(r["id"].startswith("gap:claim") for r in cov):
+    fails.append("L-10: a backticked claim quote left its limit reported as untracked")
+
+# L-11: claim and MCP checks treat a server outage as WARN with the status, not CHANGED or a parse error
+real_http = keeper.http
+keeper.http = lambda *a, **k: (503, '{"error": "unavailable"}')
+cl = keeper.chk_claim({"id": "c", "quote": "the sky is blue", "check": {"http": "https://example.invalid", "jsonPath": "n", "equals": 1}},
+                      [("SKILL.md", ["the sky is blue"])], tmp)
+mc = keeper.chk_mcp({"id": "m", "url": "https://example.invalid/mcp", "expectTools": {"t": []}}, None)
+if cl[0]["status"] != "WARN" or "503" not in cl[0]["detail"] or mc[0]["status"] != "WARN" or "503" not in mc[0]["detail"]:
+    fails.append(f"L-11: a 503 must be WARN with the status (claim: {cl[0]['status']} {cl[0]['detail'][:60]!r}; mcp: {mc[0]['detail'][:60]!r})")
+keeper.http = real_http
+
 shutil.rmtree(tmp, ignore_errors=True)
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("ok: 7 keeper lessons hold")
+print("ok: 10 keeper lessons hold")

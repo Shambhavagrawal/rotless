@@ -38,7 +38,8 @@ SECRETS = [
     (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "[REDACTED-AWS-KEY]"),
     (re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}"), "[REDACTED-SLACK-TOKEN]"),
     (re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{16,}"), "Bearer [REDACTED]"),
-    (re.compile(r"(?i)\b(password|passwd|secret|token|api[_-]?key)(\s*[:=]\s*)(\"[^\"]*\"|'[^']*'|\S+)"), r"\1\2[REDACTED]"),
+    # also JSON / dict style: "token": "x", 'api_key': 'x' (lesson L-2026-11-02-1)
+    (re.compile(r"(?i)\b(password|passwd|secret|token|api[_-]?key)([\"']?\s*[:=]\s*)(\"[^\"]*\"|'[^']*'|[^\s,;}\])]+)"), r"\1\2[REDACTED]"),
     (re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----", re.S), "[REDACTED-PRIVATE-KEY]"),
 ]
 
@@ -171,8 +172,15 @@ def cmd_snapshot(a):
     if not d:
         print(f"skill not found: {a.skill}", file=sys.stderr)
         return 1
-    dst = registry() / "snapshots" / d.name / f"{dt.datetime.now():%Y%m%d-%H%M%S}" / d.name
-    shutil.copytree(d, dst, ignore=shutil.ignore_patterns("__pycache__", "*-workspace"))
+    base = registry() / "snapshots" / d.name
+    stamp = f"{dt.datetime.now():%Y%m%d-%H%M%S}"
+    n = 1
+    while (base / (stamp if n == 1 else f"{stamp}-{n}")).exists():  # two snapshots in one second (L-2026-11-02-2)
+        n += 1
+    dst = base / (stamp if n == 1 else f"{stamp}-{n}") / d.name
+    # .git packs are read-only on Windows and would break later cleanup; none of these belong in a snapshot
+    shutil.copytree(d, dst, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*-workspace", ".git", ".venv",
+                                                          "node_modules", "*.skill"))
     print(dst)
     return 0
 
@@ -194,14 +202,20 @@ def cmd_selftest(_):
         ev = n[0]["evidence"]
         assert "abc123" not in ev and "ghp_" not in ev and "zzz" not in ev, ev
         assert redact("x" * (MAX_FIELD + 50)).endswith("[truncated]")
+        js = redact('{"token": "s3cret-value", "api_key": \'12345\', "password":"hunter2"}')
+        assert "s3cret" not in js and "12345" not in js and "hunter2" not in js, js  # JSON-style keys too
         assert cmd_close(argparse.Namespace(skill="toy-skill", ids=[n[0]["id"]], as_="rejected",
                                             reason="one-off network blip", lesson="")) == 0
         assert load("toy-skill")[0]["status"] == "rejected"
         assert cmd_close(argparse.Namespace(skill="toy-skill", ids=["n-missing"], as_="resolved",
                                             reason="", lesson="")) == 1
         snap = registry() / "snapshots"
+        (sk / ".git").mkdir()
+        (sk / ".git" / "HEAD").write_text("ref", encoding="utf-8")
         assert cmd_snapshot(argparse.Namespace(skill=str(sk))) == 0 and any(snap.rglob("SKILL.md"))
-        print("selftest: 8 checks passed")
+        assert cmd_snapshot(argparse.Namespace(skill=str(sk))) == 0  # twice in the same second
+        assert not any(snap.rglob(".git")), "snapshots must skip .git"
+        print("selftest: 11 checks passed")
         return 0
     finally:
         if old is None:

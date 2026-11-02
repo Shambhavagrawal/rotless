@@ -50,3 +50,22 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `transient()`; API and doc checks report 429 and 5xx as WARN "rerun later"; other 4xx still FAIL (scripts/keeper.py)
 - Check: scripts/test_keeper.py L-8 (red on snapshot 20261102-175457, green after)
 - Why: skills.sh flapped (200, 503, 503, 200) and `check` said the endpoint changed or moved
+
+## L-2026-11-02-9: only shell gets parsed for commands
+- From: external code review (Gemini), round 3, 2026-11-02 · verdict: fix
+- Change: Start: `strip_examples()` blanks non-shell fences (markdown, text, json, python…) and ASCII diagrams; shell comments are dropped; a lone `|` splits only with spaces around it (scripts/keeper.py extract)
+- Check: scripts/test_keeper.py L-9 (red on snapshot 20261102-184047, green after)
+- Why: a markdown table template produced CLIs `repo`, `last`, `license`; `--kind a|b|c` produced `correction`, `workaround`. Harmless only while no such program is on PATH: a Linux host with `repo` or `last` installed would report false GAPs
+- Note: the review predicted CI on ubuntu-latest would fail; the previous CI run passed there, so those programs weren't on that runner's PATH. The bug was real, the prediction wasn't
+
+## L-2026-11-02-10: coverage normalises claim quotes like chk_claim
+- From: external code review (Gemini), round 3, 2026-11-02 · verdict: fix
+- Change: Start: `coverage()` compares `norm_text()` of quote and limit phrase
+- Check: scripts/test_keeper.py L-10
+- Why: a backticked quote passed `chk_claim` but left its limit reported as an untracked GAP
+
+## L-2026-11-02-11: claim and MCP checks report outages as WARN with the status
+- From: external code review (Gemini), round 3, 2026-11-02 · verdict: fix
+- Change: Start: `chk_claim` http checks and `chk_mcp` use `transient()`; a non-200 MCP reply names its status instead of a parse error
+- Check: scripts/test_keeper.py L-11
+- Why: a 503 turned a claim into "CHANGED: no longer true (now: None)" and an MCP check into "KeyError: 'result'"

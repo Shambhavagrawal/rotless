@@ -134,6 +134,15 @@ try:
         fails.append("L-10: raw HTML got into the review page")
 except Exception as e:
     fails.append(f"L-10: {type(e).__name__}: {e}")
+# L-11: the runners read the same descriptions the validator accepts (one shared frontmatter parser)
+try:
+    d = toy("toy-m", "name: toy-m\ndescription:\n  Use this skill when: the user asks for X\n  and nothing else")
+    got = load("utils").parse_skill_md(d)[1]
+    if got != "Use this skill when: the user asks for X and nothing else":
+        fails.append(f"L-11: utils.parse_skill_md read the description as {got!r}")
+except Exception as e:
+    fails.append(f"L-11: {type(e).__name__}: {e}")
+
 shutil.rmtree(tmp6, ignore_errors=True)
 
 shutil.rmtree(src.parent, ignore_errors=True)
@@ -141,4 +150,4 @@ shutil.rmtree(ws, ignore_errors=True)
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("ok: 9 creator lessons hold")
+print("ok: 10 creator lessons hold")

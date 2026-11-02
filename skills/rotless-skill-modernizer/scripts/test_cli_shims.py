@@ -8,6 +8,7 @@ by bare name. This creates a fake CLI on PATH and asserts keeper.run() finds it.
 """
 import importlib.util
 import os
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -27,5 +28,6 @@ else:
 os.environ["PATH"] = str(tmp) + os.pathsep + os.environ.get("PATH", "")
 
 rc, out, err = keeper.run(["rotless-fake-cli", "--version"])
+shutil.rmtree(tmp, ignore_errors=True)
 assert rc == 0 and "fake-cli 1.2.3" in out, f"keeper.run could not launch a shim CLI: rc={rc} err={err!r}"
 print("ok: keeper.run launches shim CLIs")

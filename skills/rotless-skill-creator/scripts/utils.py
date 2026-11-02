@@ -1,6 +1,7 @@
 """Shared utilities for skill-creator scripts."""
 
 import json
+import re
 from pathlib import Path
 
 
@@ -18,44 +19,39 @@ def unquote(v):
 
 
 
+def parse_frontmatter(text):
+    """Top-level keys of a YAML frontmatter block, without PyYAML. Values: str, or dict for mappings."""
+    m = re.match(r'^---\r?\n(.*?)\r?\n---', text, re.S)
+    if not m:
+        return None, text
+    fm, key = {}, None
+    for line in m.group(1).splitlines():
+        top = re.match(r'^([A-Za-z][\w-]*):\s*(.*)$', line)
+        if top:
+            key, val = top.group(1), top.group(2).strip()
+            # only metadata is a mapping; any other key with its value on the next lines is a string
+            # (a description line like 'Use this when: …' must not turn into a map; lesson L-2026-11-02-6)
+            fm[key] = ({} if key == 'metadata' else '') if val == '' else val
+        elif key is not None and line[:1] in (' ', '\t') and line.strip():
+            sub = re.match(r'^\s+([\w.-]+):\s*(.*)$', line)
+            if isinstance(fm[key], dict) and sub:
+                fm[key][sub.group(1)] = sub.group(2).strip()
+            elif isinstance(fm[key], str):
+                fm[key] = (fm[key] + ' ' + line.strip()).strip()
+    for k, v in fm.items():
+        if isinstance(v, str):
+            if v in ('>', '|', '>-', '|-'):
+                fm[k] = ''
+            fm[k] = unquote(re.sub(r'^([>|]-?)\s+', '', fm[k]).strip())
+    return fm, text[m.end():]
+
+
 def parse_skill_md(skill_path: Path) -> tuple[str, str, str]:
-    """Parse a SKILL.md file, returning (name, description, full_content)."""
+    """(name, description, full_content), read with the same parser quick_validate uses, so the runners
+    and the validator never disagree about a description (lesson L-2026-11-02-11)."""
     content = (skill_path / "SKILL.md").read_text(encoding="utf-8")
-    lines = content.split("\n")
-
-    if lines[0].strip() != "---":
-        raise ValueError("SKILL.md missing frontmatter (no opening ---)")
-
-    end_idx = None
-    for i, line in enumerate(lines[1:], start=1):
-        if line.strip() == "---":
-            end_idx = i
-            break
-
-    if end_idx is None:
-        raise ValueError("SKILL.md missing frontmatter (no closing ---)")
-
-    name = ""
-    description = ""
-    frontmatter_lines = lines[1:end_idx]
-    i = 0
-    while i < len(frontmatter_lines):
-        line = frontmatter_lines[i]
-        if line.startswith("name:"):
-            name = unquote(line[len("name:"):])
-        elif line.startswith("description:"):
-            value = line[len("description:"):].strip()
-            # Handle YAML multiline indicators (>, |, >-, |-)
-            if value in (">", "|", ">-", "|-"):
-                continuation_lines: list[str] = []
-                i += 1
-                while i < len(frontmatter_lines) and (frontmatter_lines[i].startswith("  ") or frontmatter_lines[i].startswith("\t")):
-                    continuation_lines.append(frontmatter_lines[i].strip())
-                    i += 1
-                description = " ".join(continuation_lines)
-                continue
-            else:
-                description = unquote(value)
-        i += 1
-
-    return name, description, content
+    fm, _ = parse_frontmatter(content)
+    if fm is None:
+        raise ValueError("SKILL.md has no frontmatter (it must start with ---)")
+    name, desc = fm.get("name", ""), fm.get("description", "")
+    return (name if isinstance(name, str) else ""), (desc if isinstance(desc, str) else ""), content
