@@ -16,8 +16,8 @@ manifest listing them; this engine checks them and reports only what changed.
 skills folder this script is installed in (works in any harness: Claude Code, Codex, Antigravity…),
 and ./.claude/skills, ./.agents/skills. Only skills with a keeper.json are ever checked: third-party
 skills belong to their authors. Never writes to a skill folder except `ack` (keeper.json) and `init`
-(keeper.draft.json). State, digests, history: <skills folder>/../skill-registry, a local git repo
-(override with $SKILL_REGISTRY).
+(keeper.draft.json). State, digests, history: a local git repo, the skill-registry folder next to the
+skills folder if one exists there, otherwise ~/.skill-registry (override with $SKILL_REGISTRY).
 """
 import argparse
 import datetime as dt
@@ -38,10 +38,24 @@ import urllib.request
 HOME = pathlib.Path.home()
 HERE = pathlib.Path(__file__).resolve().parent      # <skills folder>/rotless-skill-modernizer/scripts
 SKILLS_ROOT = HERE.parent.parent                     # the folder this harness loads skills from
-REGISTRY = pathlib.Path(os.environ.get("SKILL_REGISTRY") or SKILLS_ROOT.parent / "skill-registry")
+# where agents keep user-level skills (the same list as rotless-skill-creator's harness.py)
+USER_SKILL_DIRS = ["~/.claude/skills", "~/.agents/skills", "~/.codex/skills", "~/.copilot/skills",
+                   "~/.gemini/skills", "~/.config/opencode/skills", "~/.cursor/skills"]
+
+
+def default_registry():
+    """State must survive reinstalls: keep an existing skill-registry next to the skills folder, otherwise use
+    ~/.skill-registry, never the install folder (a plugin cache is wiped on update). Lesson L-2026-11-02-12;
+    rotless-skill-refiner's notes.py uses the same rule."""
+    legacy = SKILLS_ROOT.parent / "skill-registry"
+    return legacy if legacy.is_dir() else HOME / ".skill-registry"
+
+
+REGISTRY = pathlib.Path(os.environ.get("SKILL_REGISTRY") or default_registry())
 ROOTS = list(dict.fromkeys(
     [pathlib.Path(p).expanduser().resolve() for p in os.environ.get("SKILL_ROOTS", "").split(os.pathsep) if p]
-    + [SKILLS_ROOT] + [pathlib.Path.cwd() / d / "skills" for d in (".claude", ".agents")]))
+    + [SKILLS_ROOT] + [pathlib.Path(os.path.expanduser(d)).resolve() for d in USER_SKILL_DIRS]
+    + [pathlib.Path.cwd() / d / "skills" for d in (".claude", ".agents")]))
 UA = "rotless-skill-modernizer/1.0"
 PY = sys.executable
 STATUS_ORDER = {"FAIL": 0, "CHANGED": 1, "LEARN": 2, "NEW": 3, "GAP": 4, "WARN": 5, "INFO": 6, "OK": 7, "BASELINE": 8}

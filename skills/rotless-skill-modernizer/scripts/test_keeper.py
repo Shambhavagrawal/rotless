@@ -135,8 +135,51 @@ if cl[0]["status"] != "WARN" or "503" not in cl[0]["detail"] or mc[0]["status"] 
     fails.append(f"L-11: a 503 must be WARN with the status (claim: {cl[0]['status']} {cl[0]['detail'][:60]!r}; mcp: {mc[0]['detail'][:60]!r})")
 keeper.http = real_http
 
+# L-12: installed as a plugin (or anywhere else), keeper finds your skills in the standard user folders and keeps
+# its state outside the install folder; an existing registry next to the skills folder keeps being used
+home = tmp / "home"
+mine = home / ".claude" / "skills" / "my-skill"
+mine.mkdir(parents=True)
+(mine / "SKILL.md").write_text("---\nname: my-skill\ndescription: x\n---\nbody\n", encoding="utf-8")
+(mine / "keeper.json").write_text(json.dumps({"skill": "my-skill", "deps": []}), encoding="utf-8")
+cache = home / ".claude" / "plugins" / "cache" / "rotless" / "rotless" / "1.0.0" / "skills"
+for name, script in (("rotless-skill-modernizer", "keeper.py"), ("rotless-skill-refiner", "notes.py")):
+    src = (skill if name == "rotless-skill-modernizer" else skill.parent / name) / "scripts" / script
+    if src.is_file():
+        (cache / name / "scripts").mkdir(parents=True)
+        shutil.copy2(src, cache / name / "scripts" / script)
+env12 = {k: v for k, v in os.environ.items() if k not in ("SKILL_REGISTRY", "SKILL_ROOTS")}
+env12.update({"HOME": str(home), "USERPROFILE": str(home)})
+
+
+def where(script_dir, code):
+    r = subprocess.run([sys.executable, "-c", f"import sys; sys.path.insert(0, r'{script_dir}'); {code}"],
+                       cwd=tmp, env=env12, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+    return r.stdout.strip() or r.stderr.strip()[-200:]
+
+
+kdir = cache / "rotless-skill-modernizer" / "scripts"
+reg = where(kdir, "import keeper; print(keeper.REGISTRY)")
+found = where(kdir, "import keeper; print(','.join(d.name for d in keeper.manifest_skills()))")
+if Path(reg) != home / ".skill-registry":
+    fails.append(f"L-12: a plugin install must keep state in ~/.skill-registry, not {reg}")
+if "my-skill" not in found.split(","):
+    fails.append(f"L-12: skills in ~/.claude/skills must be found from a plugin install (found {found!r})")
+ndir = cache / "rotless-skill-refiner" / "scripts"
+if ndir.is_dir():
+    nreg = where(ndir, "import notes; print(notes.registry())")
+    if Path(nreg) != Path(reg):
+        fails.append(f"L-12: notes.py and keeper.py must share one registry ({nreg} vs {reg})")
+legacy = home / ".claude" / "skill-registry"
+legacy.mkdir()
+inst = home / ".claude" / "skills" / "rotless-skill-modernizer" / "scripts"
+inst.mkdir(parents=True)
+shutil.copy2(skill / "scripts" / "keeper.py", inst / "keeper.py")
+if Path(where(inst, "import keeper; print(keeper.REGISTRY)")) != legacy:
+    fails.append("L-12: an existing skill-registry next to the skills folder must keep being used")
+
 shutil.rmtree(tmp, ignore_errors=True)
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("ok: 10 keeper lessons hold")
+print("ok: 11 keeper lessons hold")

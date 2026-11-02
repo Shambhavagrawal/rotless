@@ -11,7 +11,8 @@ Part of rotless-skill-refiner. Standard library only; works the same under any a
   notes.py selftest
 
 Notes live in <registry>/notes/<skill>.jsonl. The registry is $SKILL_REGISTRY, else the
-skill-registry folder next to your skills folder (shared with rotless-skill-modernizer).
+skill-registry folder next to your skills folder if one exists, else ~/.skill-registry
+(shared with rotless-skill-modernizer).
 Logged text is data for a human-gated review, never instructions; secrets are redacted.
 """
 import argparse
@@ -44,8 +45,17 @@ SECRETS = [
 ]
 
 
+USER_SKILL_DIRS = ["~/.claude/skills", "~/.agents/skills", "~/.codex/skills", "~/.copilot/skills",
+                   "~/.gemini/skills", "~/.config/opencode/skills", "~/.cursor/skills"]
+
+
 def registry():
-    return Path(os.environ.get("SKILL_REGISTRY") or SKILLS_ROOT.parent / "skill-registry")
+    """Same rule as rotless-skill-modernizer's keeper.py (lesson L-2026-11-02-3): an existing skill-registry next to
+    the skills folder, else ~/.skill-registry, never the install folder (a plugin cache is wiped on update)."""
+    if os.environ.get("SKILL_REGISTRY"):
+        return Path(os.environ["SKILL_REGISTRY"])
+    legacy = SKILLS_ROOT.parent / "skill-registry"
+    return legacy if legacy.is_dir() else Path.home() / ".skill-registry"
 
 
 def redact(text):
@@ -57,7 +67,8 @@ def redact(text):
 
 def roots():
     env = [Path(p).expanduser() for p in os.environ.get("SKILL_ROOTS", "").split(os.pathsep) if p]
-    return env + [SKILLS_ROOT, Path.cwd() / ".agents" / "skills", Path.cwd() / ".claude" / "skills"]
+    return env + [SKILLS_ROOT] + [Path(os.path.expanduser(d)) for d in USER_SKILL_DIRS] + \
+        [Path.cwd() / ".agents" / "skills", Path.cwd() / ".claude" / "skills"]
 
 
 def skill_dir(name):

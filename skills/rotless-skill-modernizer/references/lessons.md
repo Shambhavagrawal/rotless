@@ -56,7 +56,7 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `strip_examples()` blanks non-shell fences (markdown, text, json, python…) and ASCII diagrams; shell comments are dropped; a lone `|` splits only with spaces around it (scripts/keeper.py extract)
 - Check: scripts/test_keeper.py L-9 (red on snapshot 20261102-184047, green after)
 - Why: a markdown table template produced CLIs `repo`, `last`, `license`; `--kind a|b|c` produced `correction`, `workaround`. Harmless only while no such program is on PATH: a Linux host with `repo` or `last` installed would report false GAPs
-- Note: the review predicted CI on ubuntu-latest would fail; the previous CI run passed there, so those programs weren't on that runner's PATH. The bug was real, the prediction wasn't
+- Note: the review predicted that CI on ubuntu-latest would fail, but the previous CI run passed there because those programs weren't on that runner's PATH
 
 ## L-2026-11-02-10: coverage normalises claim quotes like chk_claim
 - From: external code review (Gemini), round 3, 2026-11-02 · verdict: fix
@@ -69,3 +69,9 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `chk_claim` http checks and `chk_mcp` use `transient()`; a non-200 MCP reply names its status instead of a parse error
 - Check: scripts/test_keeper.py L-11
 - Why: a 503 turned a claim into "CHANGED: no longer true (now: None)" and an MCP check into "KeyError: 'result'"
+
+## L-2026-11-02-12: works from a plugin install: finds your skills, keeps state outside the install folder
+- From: README audit, 2026-11-02 · verdict: fix
+- Change: Start: `keeper.py` also searches every agent's user skills folder (`USER_SKILL_DIRS`); the registry is an existing `skill-registry/` next to the skills folder, else `~/.skill-registry`, never the install folder. rotless-skill-refiner's notes.py uses the same rule
+- Check: scripts/test_keeper.py L-12 (red on snapshot 20261102-194957, green after): a plugin-cache layout keeps state in ~/.skill-registry and finds ~/.claude/skills; notes.py agrees; an existing registry keeps being used
+- Why: installed as a Claude Code plugin, the registry landed in the plugin cache (wiped on update) and your own skills in ~/.claude/skills were invisible to `check --all` and `list`
