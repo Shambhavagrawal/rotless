@@ -3,20 +3,20 @@
 
 A skill you write refers to things that change without telling you: CLIs and their subcommands,
 APIs and their response shapes, MCP servers and their tool schemas, repos you cite, packages,
-docs pages, limits and flags stated in the text. Each authored skill carries a `keeper.json`
+docs pages, limits and flags stated in the text. Each authored skill carries a `rotless.json`
 manifest listing them; this engine checks them and reports only what changed.
 
-  keeper.py init  <skill>            draft keeper.json from what SKILL.md + references/ mention
+  keeper.py init  <skill>            draft rotless.json from what SKILL.md + references/ mention
   keeper.py check <skill>... | --all run every check; print + save a digest; exit 1 if action needed
   keeper.py ack   <skill> [ID ...]   accept current upstream values as the new baseline (e.g. a new CLI version you verified)
-  keeper.py list                     your skills (folders with keeper.json) and their last result
+  keeper.py list                     your skills (folders with rotless.json) and their last result
   keeper.py status                   one offline line for hooks
 
 <skill> is a skill name or a path. Names are looked up in: $SKILL_ROOTS (os.pathsep-separated), the
 skills folder this script is installed in (works in any harness: Claude Code, Codex, Antigravity…),
-and ./.claude/skills, ./.agents/skills. Only skills with a keeper.json are ever checked: third-party
-skills belong to their authors. Never writes to a skill folder except `ack` (keeper.json) and `init`
-(keeper.draft.json). State, digests, history: a local git repo, the skill-registry folder next to the
+and ./.claude/skills, ./.agents/skills. Only skills with a rotless.json are ever checked: third-party
+skills belong to their authors. Never writes to a skill folder except `ack` (rotless.json) and `init`
+(rotless.draft.json). State, digests, history: a local git repo, the skill-registry folder next to the
 skills folder if one exists there, otherwise ~/.skill-registry (override with $SKILL_REGISTRY).
 """
 import argparse
@@ -52,6 +52,13 @@ def default_registry():
 
 
 REGISTRY = pathlib.Path(os.environ.get("SKILL_REGISTRY") or default_registry())
+MANIFEST, LEGACY_MANIFEST = "rotless.json", "keeper.json"  # renamed 2026-11-02; the old name is still read (L-2026-11-02-13)
+
+
+def manifest(d):
+    """A skill's manifest: rotless.json, or keeper.json from before the rename."""
+    d = pathlib.Path(d)
+    return d / LEGACY_MANIFEST if not (d / MANIFEST).is_file() and (d / LEGACY_MANIFEST).is_file() else d / MANIFEST
 ROOTS = list(dict.fromkeys(
     [pathlib.Path(p).expanduser().resolve() for p in os.environ.get("SKILL_ROOTS", "").split(os.pathsep) if p]
     + [SKILLS_ROOT] + [pathlib.Path(os.path.expanduser(d)).resolve() for d in USER_SKILL_DIRS]
@@ -148,17 +155,17 @@ def resolve_skill(name):
 
 
 def manifest_skills():
-    """Every skill folder with a keeper.json. Not proof of authorship: installed skills can ship one."""
+    """Every skill folder with a rotless.json. Not proof of authorship: installed skills can ship one."""
     out = []
     for root in ROOTS:
         if root.is_dir():
-            out += [d.resolve() for d in sorted(root.iterdir()) if (d / "keeper.json").is_file()]
+            out += [d.resolve() for d in sorted(root.iterdir()) if (manifest(d)).is_file()]
     return list(dict.fromkeys(out))
 
 
 def owned_names():
     """Skills the user marked as their own (<registry>/owned.json). Only these get checks, because checks run
-    the commands in keeper.json; a third-party skill shipping a keeper.json must not get code execution just by
+    the commands in rotless.json; a third-party skill shipping a rotless.json must not get code execution just by
     being installed (lesson L-2026-11-02-6). First use migrates: skills checked before count as owned."""
     f = REGISTRY / "owned.json"
     names = load_json(f, None)
@@ -308,11 +315,11 @@ def chk_repos(deps, state):
                     verified.append(f)
                 except RuntimeError:
                     out.append(result(f"{cid}:{f}", "FAIL", f"borrowed file `{f}` not found in {now['name']}",
-                                      "fix the path in keeper.json (or the file moved before we started watching)"))
+                                      "fix the path in rotless.json (or the file moved before we started watching)"))
             now["files"] = verified
             if now["name"].lower() != n.lower():
                 out.append(result(cid, "CHANGED", f"{n} is now {now['name']} (renamed/transferred)",
-                                  "update the name in SKILL.md and keeper.json"))
+                                  "update the name in SKILL.md and rotless.json"))
             if now["archived"]:
                 out.append(result(cid, "CHANGED" if not (prev or {}).get("archived") else "WARN",
                                   f"{now['name']} is archived (last commit {now['lastCommit']})",
@@ -340,13 +347,13 @@ def chk_repos(deps, state):
                 if f in ch["renamedFrom"]:
                     hits += 1
                     out.append(result(f"{cid}:{f}", "CHANGED", f"borrowed file `{f}` was renamed to `{ch['renamedFrom'][f]['filename']}`",
-                                      "update the path in keeper.json; re-read it if the skill still mirrors it", value=now["sha"]))
+                                      "update the path in rotless.json; re-read it if the skill still mirrors it", value=now["sha"]))
                 elif f in ch["files"]:
                     hits += 1
                     fc = ch["files"][f]
                     if fc["status"] == "removed":
                         out.append(result(f"{cid}:{f}", "CHANGED", f"borrowed file `{f}` was removed from {now['name']}",
-                                          "drop it from keeper.json; check whether the idea moved elsewhere", value=now["sha"]))
+                                          "drop it from rotless.json; check whether the idea moved elsewhere", value=now["sha"]))
                     else:
                         log = borrowed_file_commits(now["name"], f, now["seenDate"] or "")
                         out.append(result(f"{cid}:{f}", "LEARN", f"borrowed file `{f}` changed (+{fc.get('additions', 0)} −{fc.get('deletions', 0)}): "
@@ -547,7 +554,7 @@ def chk_claim(c, texts, skill_dir):
     where = quote_where(c["quote"], texts)
     if not where:  # the text was edited away: the claim is stale, whatever its check says
         return [result(cid, "WARN", f"quoted text no longer in the skill: “{c['quote']}”",
-                       "the skill was edited: update the claim's quote (or delete the claim) in keeper.json")]
+                       "the skill was edited: update the claim's quote (or delete the claim) in rotless.json")]
     out = []
     chk = c.get("check") or {}
     try:
@@ -583,7 +590,7 @@ def chk_claim(c, texts, skill_dir):
 # ------------------------------------------------------------------ check command -------------
 
 def check_skill(skill_dir):
-    man = load_json(skill_dir / "keeper.json", {})
+    man = load_json(manifest(skill_dir), {})
     name = skill_dir.name
     state_file = REGISTRY / "state" / f"{name}.json"
     state = load_json(state_file, {})
@@ -644,7 +651,7 @@ def render(name, man, results):
     L = [f"# {name}: keeper check {dt.date.today().isoformat()}",
          f"_last verified by its author: {v.get('date', 'never')}{(' · ' + v['note']) if v.get('note') else ''}_", ""]
     groups = [("Fix the skill", ("FAIL", "CHANGED")), ("Worth learning from (upstream commits since last review)", ("LEARN",)),
-              ("Not tracked in keeper.json (update the manifest)", ("GAP",)),
+              ("Not tracked in rotless.json (update the manifest)", ("GAP",)),
               ("New in the landscape", ("NEW",)), ("Worth a look", ("WARN", "INFO")),
               ("Baseline recorded (first run)", ("BASELINE",)), ("OK", ("OK",))]
     for title, sts in groups:
@@ -675,22 +682,25 @@ def cmd_check(args):
         foreign = [d.name for d in manifest_skills() if d.name not in owned_names()]
         if foreign:
             print(f"skipped, not marked as yours: {', '.join(foreign)} (their checks would run the commands in their "
-                  "keeper.json; if you wrote one, run `keeper.py own <name>`)")
+                  "rotless.json; if you wrote one, run `keeper.py own <name>`)")
     else:
         dirs = [resolve_skill(s) for s in args.skills]
         for d in dirs:
-            if (d / "keeper.json").is_file() and d.name not in owned_names():
-                sys.exit(f"{d.name} is not marked as yours, and checking it runs the commands in its keeper.json. "
+            if (manifest(d)).is_file() and d.name not in owned_names():
+                sys.exit(f"{d.name} is not marked as yours, and checking it runs the commands in its rotless.json. "
                          f"If you wrote it: keeper.py own {d.name}")
     if not dirs:
-        sys.exit("no skills with keeper.json found (run `keeper.py init <skill>` first)")
+        sys.exit("no skills with rotless.json found (run `keeper.py init <skill>` first)")
     needs_action = False
     for d in dirs:
-        if not (d / "keeper.json").is_file():
-            print(f"{d.name}: no keeper.json; skipping (run `keeper.py init {d.name}`)")
+        if not (manifest(d)).is_file():
+            print(f"{d.name}: no rotless.json; skipping (run `keeper.py init {d.name}`)")
             continue
         man, results = check_skill(d)
         report = render(d.name, man, results)
+        if manifest(d).name == LEGACY_MANIFEST:
+            report += ("\n\nNote: this skill's manifest is still named keeper.json, the old name. "
+                       "Rename it to rotless.json; both names are read.")
         if open_notes(d.name):
             report += (f"\n\n## Field notes from use ({open_notes(d.name)} open)\nNot drift: lessons logged while the skill was used. "
                        f"Review them with rotless-skill-refiner (`notes.py list {d.name}`, then its retro).")
@@ -707,9 +717,9 @@ def cmd_check(args):
 
 def cmd_ack(args):
     d = resolve_skill(args.skill)
-    man = load_json(d / "keeper.json", {})
+    man = load_json(manifest(d), {})
     if not man:
-        sys.exit(f"{d.name} has no keeper.json")
+        sys.exit(f"{d.name} has no rotless.json")
     state_file = REGISTRY / "state" / f"{d.name}.json"
     state = load_json(state_file, {})
     pending = state.get("_pending", {})
@@ -739,7 +749,7 @@ def cmd_ack(args):
         pending.pop(cid, None)
     if args.note or done:
         man["verified"] = {"date": dt.date.today().isoformat(), "note": args.note or "; ".join(done)}
-    save_json(d / "keeper.json", man)
+    save_json(manifest(d), man)
     save_json(state_file, state)
     commit_registry(f"ack {d.name}: {'; '.join(done) or args.note or 'noted'}")
     if done:
@@ -878,7 +888,7 @@ def norm_url(u):
 
 
 def coverage(man, ref, offline=False):
-    """The safety net: references in the skill's text that keeper.json doesn't track. A manifest written
+    """The safety net: references in the skill's text that rotless.json doesn't track. A manifest written
     at creation time falls behind the first time someone edits the skill; this catches that."""
     ign = man.get("ignore", [])
 
@@ -890,7 +900,7 @@ def coverage(man, ref, offline=False):
     out = []
     for tool, loc in ref["cli"].items():
         if tool not in clis and not ignored(tool) and shutil.which(tool):
-            out.append(result(f"gap:cli:{tool}", "GAP", f"the text uses `{tool}` but keeper.json doesn't track it",
+            out.append(result(f"gap:cli:{tool}", "GAP", f"the text uses `{tool}` but rotless.json doesn't track it",
                               'add a "cli" dep, or list it under "ignore"', loc))
     for (tool, sub), loc in ref["sub"].items():
         if tool not in clis or ignored(f"{tool} {sub}"):
@@ -908,13 +918,13 @@ def coverage(man, ref, offline=False):
     tracked_repos = {d["repo"].lower() for d in deps if d.get("type") == "github-repo"}
     candidates = [r for r in ref["repo"] if r.lower() not in tracked_repos and not ignored(r)]
     for r in ([] if offline else sorted(existing_repos(candidates))):  # telling real repos from prose needs the network
-        out.append(result(f"gap:repo:{r}", "GAP", f"the text cites {r} but keeper.json doesn't watch it",
+        out.append(result(f"gap:repo:{r}", "GAP", f"the text cites {r} but rotless.json doesn't watch it",
                           'add a "github-repo" dep with its role', ref["repo"][r]))
     for tool, (v, loc) in ref["version"].items():
         tested = (clis.get(tool) or {}).get("tested")
         said, have = [int(x) for x in re.findall(r"\d+", v)], [int(x) for x in re.findall(r"\d+", tested or "")]
         if tested and have[:len(said)] != said:
-            out.append(result(f"gap:version:{tool}", "GAP", f"the text says {tool} {v}, keeper.json says it was verified on {tested}",
+            out.append(result(f"gap:version:{tool}", "GAP", f"the text says {tool} {v}, rotless.json says it was verified on {tested}",
                               "one of them is stale: update the text or `tested`", loc))
     quotes = [norm_text(c["quote"]) for c in man.get("claims", [])]  # same normalisation as chk_claim (L-2026-11-02-10)
     for phrase, loc in ref["limit"].items():
@@ -998,12 +1008,12 @@ def cmd_init(args):
     searches = [{"name": f"{d.name}-space", "queries": prior["queries"][:8], "windowDays": 180, "minStars": 1,
                  "_from": "references/prior-art.md"}] if prior and prior["queries"] else []
     draft = {"_draft": f"generated {dt.date.today().isoformat()} by keeper.py init: curate it (delete noise, add expectations, "
-                       "give claims a check, add an \"ignore\" list for references you deliberately don't track), then rename to keeper.json",
+                       "give claims a check, add an \"ignore\" list for references you deliberately don't track), then rename to rotless.json",
              "skill": d.name, "verified": {"date": None, "note": ""}, "deps": deps, "claims": claims, "ignore": [],
              "landscape": {"searches": searches}}
     if prior and prior.get("verdict"):
         draft["priorArt"] = {"verdict": prior["verdict"], "file": "references/prior-art.md"}
-    target = d / "keeper.draft.json"  # always a draft: the author curates, then renames
+    target = d / "rotless.draft.json"  # always a draft: the author curates, then renames
     save_json(target, draft)
     mark_owned(d.name)  # running init on a skill is authoring it
     print(f"wrote {target}\n  {sum(x['type'] == 'cli' for x in deps)} CLIs, {sum(x['type'] == 'github-repo' for x in deps)} repos, "
@@ -1021,23 +1031,23 @@ def cmd_init(args):
 def cmd_own(args):
     d = resolve_skill(args.skill)
     mark_owned(d.name)
-    print(f"{d.name} is marked as yours: `check` will run the commands in its keeper.json")
+    print(f"{d.name} is marked as yours: `check` will run the commands in its rotless.json")
 
 
 def cmd_lint(args):
     """Offline gate (CI): manifests and eval sets parse, every claim quote is still in the text, and the text
-    references nothing keeper.json misses. Runs no code from the skill and no network calls, so it is safe on
+    references nothing rotless.json misses. Runs no code from the skill and no network calls, so it is safe on
     any skill (lesson L-2026-11-02-7)."""
     dirs = [resolve_skill(s) for s in args.skills] if args.skills else manifest_skills()
     total = 0
     for d in dirs:
         errs, man = [], None
         try:
-            man = json.loads((d / "keeper.json").read_text(encoding="utf-8"))
+            man = json.loads((manifest(d)).read_text(encoding="utf-8"))
         except FileNotFoundError:
-            errs.append("no keeper.json")
+            errs.append("no rotless.json")
         except json.JSONDecodeError as e:
-            errs.append(f"keeper.json: {e}")
+            errs.append(f"rotless.json: {e}")
         for f in sorted((d / "evals").rglob("*.json")) if (d / "evals").is_dir() else []:
             try:
                 json.loads(f.read_text(encoding="utf-8"))
@@ -1050,6 +1060,8 @@ def cmd_lint(args):
             errs += [f"{r['status']} {r['id']}: {r['detail']}" + (f" ({r['where']})" if r.get("where") else "")
                      for r in coverage(man, extract(d)[0], offline=True)]
         print(f"{d.name}: " + ("ok" if not errs else f"{len(errs)} problem(s)"))
+        if manifest(d).name == LEGACY_MANIFEST:
+            print("  note: rename keeper.json to rotless.json (the old name still works)")
         for e in errs:
             print(f"  - {e}")
         total += len(errs)
@@ -1069,11 +1081,11 @@ def open_notes(name):
 def cmd_list(_):
     dirs = owned_skills()
     if not dirs:
-        print("no authored skills with keeper.json yet. Start with: keeper.py init <skill>")
+        print("no authored skills with rotless.json yet. Start with: keeper.py init <skill>")
     for d in dirs:
         st = load_json(REGISTRY / "state" / f"{d.name}.json", {})
         s = st.get("_lastSummary") or {}
-        v = (load_json(d / "keeper.json", {}).get("verified") or {}).get("date")
+        v = (load_json(manifest(d), {}).get("verified") or {}).get("date")
         print(f"{d.name:22} last check {st.get('_lastRun', 'never')[:16]:16}  verified {v or 'never':10}  "
               + ", ".join([f"{n} {k}" for k, n in s.items() if n and k not in ("OK", "BASELINE")]
                           + ([f"{open_notes(d.name)} open field notes"] if open_notes(d.name) else [])))
@@ -1104,7 +1116,7 @@ def cmd_prior_art_diff(args):
     fa = {r: v for r, v in fa.items() if v}
     if fa:
         print("borrowed files added:" + "".join(f"\n  + {r}: {', '.join(v)}" for r, v in fa.items()))
-    print("\nIf approved: replace references/prior-art.md with the new file, then run `check`: new repos show up as GAPs to add to keeper.json.")
+    print("\nIf approved: replace references/prior-art.md with the new file, then run `check`: new repos show up as GAPs to add to rotless.json.")
 
 
 def cmd_status(_):
@@ -1159,7 +1171,7 @@ def main():
     a.add_argument("skill")
     a.add_argument("ids", nargs="*")
     a.add_argument("--note")
-    o = sub.add_parser("own", help="mark a skill as yours, so `check` runs the commands in its keeper.json")
+    o = sub.add_parser("own", help="mark a skill as yours, so `check` runs the commands in its rotless.json")
     o.add_argument("skill")
     li = sub.add_parser("lint", help="offline: manifests parse, claim quotes present, nothing untracked (for CI)")
     li.add_argument("skills", nargs="*")

@@ -150,7 +150,7 @@
         "fix <skill>",
         "Claim checks"
       ],
-      "why": "stale facts go to its fix; guard claims live in keeper.json and run in its check"
+      "why": "stale facts go to its fix; guard claims live in rotless.json and run in its check"
     },
     {
       "type": "skill",

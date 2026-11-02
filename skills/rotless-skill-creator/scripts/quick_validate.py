@@ -96,8 +96,8 @@ def validate_skill(skill_path):
                            f"quote it, e.g. {k}: \"{v}\""), []
 
     warnings = []
-    if not (skill_path / "keeper.json").is_file():
-        warnings.append("no keeper.json: the CLIs, APIs, docs and limits this skill relies on aren't tracked; "
+    if not any((skill_path / n).is_file() for n in ("rotless.json", "keeper.json")):  # keeper.json: the old name
+        warnings.append("no rotless.json: the CLIs, APIs, docs and limits this skill relies on aren't tracked; "
                         "run rotless-skill-modernizer init <skill> (rotless-skill-creator step 8)")
     lines = body.splitlines()
     if len(lines) > 500:

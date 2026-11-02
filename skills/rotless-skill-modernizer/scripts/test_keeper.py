@@ -161,25 +161,50 @@ def where(script_dir, code):
 kdir = cache / "rotless-skill-modernizer" / "scripts"
 reg = where(kdir, "import keeper; print(keeper.REGISTRY)")
 found = where(kdir, "import keeper; print(','.join(d.name for d in keeper.manifest_skills()))")
-if Path(reg) != home / ".skill-registry":
+# compare resolved paths: Windows runners spell temp folders with 8.3 short names (RUNNER~1)
+if Path(reg).resolve() != (home / ".skill-registry").resolve():
     fails.append(f"L-12: a plugin install must keep state in ~/.skill-registry, not {reg}")
 if "my-skill" not in found.split(","):
     fails.append(f"L-12: skills in ~/.claude/skills must be found from a plugin install (found {found!r})")
 ndir = cache / "rotless-skill-refiner" / "scripts"
 if ndir.is_dir():
     nreg = where(ndir, "import notes; print(notes.registry())")
-    if Path(nreg) != Path(reg):
+    if Path(nreg).resolve() != Path(reg).resolve():
         fails.append(f"L-12: notes.py and keeper.py must share one registry ({nreg} vs {reg})")
 legacy = home / ".claude" / "skill-registry"
 legacy.mkdir()
 inst = home / ".claude" / "skills" / "rotless-skill-modernizer" / "scripts"
 inst.mkdir(parents=True)
 shutil.copy2(skill / "scripts" / "keeper.py", inst / "keeper.py")
-if Path(where(inst, "import keeper; print(keeper.REGISTRY)")) != legacy:
+if Path(where(inst, "import keeper; print(keeper.REGISTRY)")).resolve() != legacy.resolve():
     fails.append("L-12: an existing skill-registry next to the skills folder must keep being used")
+
+# L-13: the manifest is rotless.json; a skill still carrying keeper.json (the old name) keeps working
+newer = root / "new-name"
+newer.mkdir()
+(newer / "SKILL.md").write_text("---\nname: new-name\ndescription: x\n---\nThe sky is blue.\n", encoding="utf-8")
+(newer / "rotless.json").write_text(json.dumps({"skill": "new-name", "deps": []}), encoding="utf-8")
+older = root / "old-name"
+older.mkdir()
+(older / "SKILL.md").write_text("---\nname: old-name\ndescription: x\n---\nThe sky is blue.\n", encoding="utf-8")
+(older / "keeper.json").write_text(json.dumps({"skill": "old-name", "deps": []}), encoding="utf-8")
+names13 = k("lint", str(newer), str(older))
+if names13.returncode != 0 or "new-name: ok" not in names13.stdout or "old-name: ok" not in names13.stdout:
+    fails.append(f"L-13: lint must accept rotless.json and the old keeper.json ({names13.stdout.strip()[:200]})")
+k("own", "new-name")
+k("own", "old-name")
+chk13 = k("check", "old-name")
+if "rotless.json" not in chk13.stdout + chk13.stderr:
+    fails.append("L-13: checking a skill with keeper.json should suggest renaming it to rotless.json")
+draft = root / "drafty"
+draft.mkdir()
+(draft / "SKILL.md").write_text("---\nname: drafty\ndescription: x\n---\nThe sky is blue.\n", encoding="utf-8")
+k("init", str(draft))
+if not (draft / "rotless.draft.json").is_file():
+    fails.append(f"L-13: init must write rotless.draft.json (wrote {sorted(p.name for p in draft.iterdir())})")
 
 shutil.rmtree(tmp, ignore_errors=True)
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("ok: 11 keeper lessons hold")
+print("ok: 12 keeper lessons hold")

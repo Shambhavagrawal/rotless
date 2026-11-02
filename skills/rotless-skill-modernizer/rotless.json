@@ -46,7 +46,7 @@
       "type": "doc",
       "id": "doc:agentskills-spec",
       "url": "https://agentskills.io/specification",
-      "why": "metadata is string->string; unknown keys: why keeper.json is a sidecar, not frontmatter"
+      "why": "metadata is string->string; unknown keys: why rotless.json is a sidecar, not frontmatter"
     },
     {
       "type": "doc",

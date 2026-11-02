@@ -5,7 +5,7 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 ## L-2026-11-02-1: launch CLIs installed as Windows shims
 - From: n-20261102143209-0cd8 (failure) · verdict: refine
 - Change: Start: `keeper.run()` resolves the command through PATH (`shutil.which`) before starting it (scripts/keeper.py, run)
-- Check: `scripts/test_cli_shims.py` (red on snapshot 20261102-143209, green after) + keeper.json command `lesson-cli-shims`
+- Check: `scripts/test_cli_shims.py` (red on snapshot 20261102-143209, green after) + rotless.json command `lesson-cli-shims`
 - Why: on Windows, npm installs codex, gemini and npx as .CMD files; `check` reported "`codex exec` no longer exists" while codex worked fine
 
 ## L-2026-11-02-2: python and python3 in checks run this interpreter
@@ -34,9 +34,9 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 
 ## L-2026-11-02-6: only skills marked as yours get checks that run code
 - From: external code review (Gemini), 2026-11-02 · verdict: fix (security)
-- Change: Start: `<registry>/owned.json`; `init` and `own` add to it; `check` skips or refuses other skills with a keeper.json; first use migrates skills already checked
-- Check: scripts/test_keeper.py L-6 (a third-party keeper.json's command never runs until `own`)
-- Why: any installed skill shipping a keeper.json got its commands run by `check --all`
+- Change: Start: `<registry>/owned.json`; `init` and `own` add to it; `check` skips or refuses other skills with a rotless.json; first use migrates skills already checked
+- Check: scripts/test_keeper.py L-6 (a third-party rotless.json's command never runs until `own`)
+- Why: any installed skill shipping a rotless.json got its commands run by `check --all`
 
 ## L-2026-11-02-7: an offline lint gate
 - From: external code review (Gemini), 2026-11-02 · verdict: fix
@@ -75,3 +75,10 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `keeper.py` also searches every agent's user skills folder (`USER_SKILL_DIRS`); the registry is an existing `skill-registry/` next to the skills folder, else `~/.skill-registry`, never the install folder. rotless-skill-refiner's notes.py uses the same rule
 - Check: scripts/test_keeper.py L-12 (red on snapshot 20261102-194957, green after): a plugin-cache layout keeps state in ~/.skill-registry and finds ~/.claude/skills; notes.py agrees; an existing registry keeps being used
 - Why: installed as a Claude Code plugin, the registry landed in the plugin cache (wiped on update) and your own skills in ~/.claude/skills were invisible to `check --all` and `list`
+- Follow-up: the check compared a short (8.3) Windows temp path with keeper's resolved long path and failed on GitHub's Windows runners (RUNNER~1); it now compares resolved paths. Reproduced locally with a short-named TEMP before fixing.
+
+## L-2026-11-02-13: the manifest is rotless.json; keeper.json still works
+- From: rename decision, 2026-11-02 · verdict: fix
+- Change: Start: `manifest()` reads `rotless.json`, else the old `keeper.json`; `init` writes `rotless.draft.json`; `check` and `lint` suggest renaming an old-name file | the four rotless skills renamed theirs
+- Check: scripts/test_keeper.py L-13 (red on snapshot 20261102-195832, green after): new and old names both lint and check, the old name gets the hint, init writes the new draft name
+- Why: "keeper" was the skill's old name (skill-keeper); the file travels into every skill built with rotless, so its name should say where it comes from

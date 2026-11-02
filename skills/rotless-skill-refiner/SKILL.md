@@ -13,7 +13,7 @@ Skills get used in situations no test predicted. Sometimes a step fails or the u
 |---|---|---|
 | rotless-github-research | prior art | before adopting a "better way" or optimization idea, check what already exists |
 | rotless-skill-creator | builds and tests skills | its test-case format, `run_case.py` (fresh runs on any agent CLI), `aggregate_benchmark` (time, tokens, pass rate), blind comparison, `run_eval.py`, `quick_validate.py` |
-| rotless-skill-modernizer | the outside world changed: drift checks on `keeper.json` | its `check` is the first triage step; drift goes to its `fix`; lesson guards live in `keeper.json` and run in its `check` |
+| rotless-skill-modernizer | the outside world changed: drift checks on `rotless.json` | its `check` is the first triage step; drift goes to its `fix`; lesson guards live in `rotless.json` and run in its `check` |
 | rotless-skill-refiner (this) | learns from use: fixes and optimizations | |
 
 Each works alone. If a sibling is missing, do its part by hand and say so.
@@ -54,7 +54,7 @@ Run it when the user asks ("review/refine/retro/optimize <skill>"), or offer it 
 
 1. Rule out drift first: run rotless-skill-modernizer `check <skill>`. A FAIL or CHANGED there means the world moved, and that part goes to its `fix` instead of this retro.
 2. `python $R/scripts/notes.py list <skill>` and `python $R/scripts/notes.py stats <skill>` (hot spots where notes cluster, `confirmed` rules, and what was rejected before).
-3. Read the skill: SKILL.md, `references/lessons.md` (why existing rules exist), `keeper.json`, `evals/`.
+3. Read the skill: SKILL.md, `references/lessons.md` (why existing rules exist), `rotless.json`, `evals/`.
 
 ### Triage every note
 
@@ -94,9 +94,9 @@ An optimization must measure better with nothing worse. Run the same cases on th
 - the target improves (time, tokens, tool calls, steps, or output quality judged by a blind comparison), and
 - the pass rate doesn't drop and every existing check still passes.
 
-When the metric is deterministic (a script's run time, number of API calls, lines of SKILL.md), add a guard to `keeper.json` (a `command` check with the new threshold) so it can't creep back. Agent-run metrics (tokens, time) go into `lessons.md` as the new baseline the next optimize retro must beat.
+When the metric is deterministic (a script's run time, number of API calls, lines of SKILL.md), add a guard to `rotless.json` (a `command` check with the new threshold) so it can't creep back. Agent-run metrics (tokens, time) go into `lessons.md` as the new baseline the next optimize retro must beat.
 
-Every lesson also gets a guard claim in `keeper.json` whose `quote` is the new rule's text, so rotless-skill-modernizer's `check` flags the rule if someone edits it away.
+Every lesson also gets a guard claim in `rotless.json` whose `quote` is the new rule's text, so rotless-skill-modernizer's `check` flags the rule if someone edits it away.
 
 ### Safety scan, then the gate
 
@@ -111,7 +111,7 @@ Drop anything that hits, or flag it plainly. Then show the author, per lesson: n
 
 ### Apply and lock in
 
-1. Edit the skill. Update `keeper.json` in the same change (guard claims, new dependencies, new `needs`).
+1. Edit the skill. Update `rotless.json` in the same change (guard claims, new dependencies, new `needs`).
 2. Append to the skill's `references/lessons.md` (create it if missing):
 
    ```markdown

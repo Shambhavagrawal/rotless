@@ -10,7 +10,7 @@ rotless is four [Agent Skills](https://agentskills.io) for building skills that 
 |---|---|
 | rotless-github-research | Before you build, it searches for repos, packages and tools that already do the job: code search, repo search, commits and issues on GitHub, plus 21 other sources such as npm, crates.io, Docker Hub, Hugging Face models and papers, and the MCP Registry. It verifies each GitHub repo it reports (activity, health, real code), checks other hits by hand, and tells you what to reuse, what to borrow and where the gap is. |
 | rotless-skill-creator | Builds the skill: a failing baseline first, an interview, the draft, test cases run with and without the skill, a review viewer, trigger tuning, and spec and portability validation. Test runs are real agent sessions on your account, so they use its quota. |
-| rotless-skill-modernizer | Keeps the skill accurate as the world changes. Its `keeper.json` lists the CLIs, APIs, MCP servers, repos, docs and limits the skill relies on, each with a check, and a coverage check flags anything the text mentions that the list misses. `check` tells you what drifted and the line to fix. |
+| rotless-skill-modernizer | Keeps the skill accurate as the world changes. Its `rotless.json` lists the CLIs, APIs, MCP servers, repos, docs and limits the skill relies on, each with a check, and a coverage check flags anything the text mentions that the list misses. `check` tells you what drifted and the line to fix. |
 | rotless-skill-refiner | Improves the skill from real use: fixes when something went wrong, and optimizations when it worked but could be faster, cheaper or simpler. You log notes while you work, and a retro turns them into small edits, each with a check. A fix must fail on the old skill and pass on the new one; an optimization must measure better on the same test cases with nothing worse. Each pass leaves the next one better. |
 
 ```
@@ -51,7 +51,7 @@ Paste this into your agent's global instructions file (`~/.claude/CLAUDE.md`, `~
 - When creating or editing a skill I author, use the rotless skills together, in this order:
   1. **rotless-github-research**: prior art first (does it exist, what to borrow, what gap is left).
   2. **rotless-skill-creator**: build or improve the skill (failing baseline first, test cases, trigger tuning, validation).
-  3. **rotless-skill-modernizer**: in the same change, write or update the skill's `keeper.json`, then run its `check`; finish with no GAP, FAIL or CHANGED.
+  3. **rotless-skill-modernizer**: in the same change, write or update the skill's `rotless.json`, then run its `check`; finish with no GAP, FAIL or CHANGED.
 - While using a skill I author: when a step fails, I correct you, you work around an instruction, you find a better way, or you see it could be faster or cheaper, log a field note with **rotless-skill-refiner**; its retro turns notes into small edits, each with a check.
 - Never use them to modify skills written by others.
 ```
@@ -84,7 +84,7 @@ Not verified yet:
 
 ## Dogfooded
 
-All four skills have their own `keeper.json` and field-notes footer, and rotless maintains itself with its own tools. That has produced 29 lessons so far, from real use and from code reviews. Each lesson has a check that failed before its fix and passes now, and CI runs all of them. The first came from the refiner itself: it caught the modernizer failing to start npm-installed CLIs on Windows. Each skill's `references/lessons.md` lists its lessons.
+All four skills have their own `rotless.json` and field-notes footer, and rotless maintains itself with its own tools. That has produced 29 lessons so far, from real use and from code reviews. Each lesson has a check that failed before its fix and passes now, and CI runs all of them. The first came from the refiner itself: it caught the modernizer failing to start npm-installed CLIs on Windows. Each skill's `references/lessons.md` lists its lessons.
 
 ## Contributing
 

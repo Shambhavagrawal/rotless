@@ -143,6 +143,20 @@ try:
 except Exception as e:
     fails.append(f"L-11: {type(e).__name__}: {e}")
 
+# L-12: the validator accepts the manifest under its new name (rotless.json) and its old one (keeper.json)
+try:
+    qv12 = load("quick_validate")
+    for fname in ("rotless.json", "keeper.json"):
+        d = toy(f"toy-{fname.split('.')[0]}", f"name: toy-{fname.split('.')[0]}\ndescription: x")
+        (d / fname).write_text("{}", encoding="utf-8")
+        if any("dependencies" in w or "keeper.json" in w or "rotless.json" in w for w in qv12.validate_skill(d)[2]):
+            fails.append(f"L-12: a skill with {fname} was told its dependencies aren't tracked")
+    bare = toy("toy-bare", "name: toy-bare\ndescription: x")
+    if not any("rotless.json" in w for w in qv12.validate_skill(bare)[2]):
+        fails.append("L-12: a skill with no manifest should be told to add rotless.json")
+except Exception as e:
+    fails.append(f"L-12: {type(e).__name__}: {e}")
+
 shutil.rmtree(tmp6, ignore_errors=True)
 
 shutil.rmtree(src.parent, ignore_errors=True)
@@ -150,4 +164,4 @@ shutil.rmtree(ws, ignore_errors=True)
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("ok: 10 creator lessons hold")
+print("ok: 11 creator lessons hold")

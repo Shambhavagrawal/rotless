@@ -1,6 +1,6 @@
 ---
 name: rotless-skill-creator
-description: Create new agent skills (SKILL.md) and improve existing ones, for any agent - Claude Code, Codex, Gemini CLI, Cursor, GitHub Copilot, OpenCode. Runs the whole rotless flow - prior art with rotless-github-research, a failing baseline first, interview, draft, test cases run with and without the skill, human review, trigger tuning, spec and portability validation, then a keeper.json through rotless-skill-modernizer and a field-notes footer for rotless-skill-refiner. Use whenever the user wants to make, write, build, scaffold, edit, test, benchmark or package a skill, turn a workflow into a skill, or fix when a skill triggers, even if they only say "make this a skill".
+description: Create new agent skills (SKILL.md) and improve existing ones, for any agent - Claude Code, Codex, Gemini CLI, Cursor, GitHub Copilot, OpenCode. Runs the whole rotless flow - prior art with rotless-github-research, a failing baseline first, interview, draft, test cases run with and without the skill, human review, trigger tuning, spec and portability validation, then a rotless.json through rotless-skill-modernizer and a field-notes footer for rotless-skill-refiner. Use whenever the user wants to make, write, build, scaffold, edit, test, benchmark or package a skill, turn a workflow into a skill, or fix when a skill triggers, even if they only say "make this a skill".
 license: Apache-2.0. Modified from Anthropic's skill-creator; see LICENSE.txt and NOTICE.
 ---
 <!-- Modified by rotless contributors (2026) from Anthropic's skill-creator (Apache-2.0). Changes are listed in NOTICE. -->
@@ -15,7 +15,7 @@ This skill creates and improves skills on whatever agent you're running in. The 
 4. Run realistic test prompts with and without the skill, and let the user review the outputs.
 5. Improve and rerun until the user is happy.
 6. Tune the description so the skill triggers when it should and stays quiet otherwise.
-7. Validate it, write its `keeper.json` and add the field-notes footer.
+7. Validate it, write its `rotless.json` and add the field-notes footer.
 
 Work out where the user is in this loop and pick up from there. Someone with a draft goes straight to testing; someone who says "no evals, just vibe with me" gets that. Match your vocabulary to the user and explain terms like "assertion" or "JSON" briefly unless they clearly know them.
 
@@ -27,7 +27,7 @@ There are four skills. Each works alone, and when the others are installed this 
 |---|---|---|
 | rotless-github-research | prior art: does it exist, what to borrow, where the gap is | step 0, before any drafting |
 | rotless-skill-creator (this) | build, test and tune a skill | |
-| rotless-skill-modernizer | records what the skill relies on in `keeper.json`; `check` catches drift when the outside world changes | step 8, and whenever you edit a skill that has a `keeper.json` |
+| rotless-skill-modernizer | records what the skill relies on in `rotless.json`; `check` catches drift when the outside world changes | step 8, and whenever you edit a skill that has a `rotless.json` |
 | rotless-skill-refiner | learns from real use: fixes and optimizations logged while the skill is used become small edits, each with a check | the footer you add in step 8 feeds it; its behaviour checks run through this skill's `run_case.py` |
 
 If a sibling isn't installed, do its step by hand and say so: search for prior art yourself, and list the skill's dependencies in your summary.
@@ -65,7 +65,7 @@ The conversation may already hold the workflow ("turn this into a skill"). Extra
 3. What's the expected output?
 4. Should it have test cases? Skills with objectively checkable outputs (file transforms, extraction, code, fixed steps) benefit; subjective ones (style, art) often don't. Suggest a default and let the user decide.
 
-Then interview for edge cases, input and output formats, example files, success criteria, and every external thing the skill will rely on: CLIs, APIs, MCP servers, docs, repos and limits. That list becomes its `keeper.json` in step 8. Research what you can yourself (docs, MCP servers, subagents) so the user isn't doing your homework.
+Then interview for edge cases, input and output formats, example files, success criteria, and every external thing the skill will rely on: CLIs, APIs, MCP servers, docs, repos and limits. That list becomes its `rotless.json` in step 8. Research what you can yourself (docs, MCP servers, subagents) so the user isn't doing your homework.
 
 ## Step 2: Show a failure before writing the skill
 
@@ -88,7 +88,7 @@ skill-name/
 ├── references/           docs loaded when needed (prior-art.md, lessons.md…)
 ├── assets/               templates, icons, fonts used in output
 ├── evals/                test cases (step 4)
-└── keeper.json           what the skill relies on (step 8)
+└── rotless.json           what the skill relies on (step 8)
 ```
 
 Agents load a skill in stages. The name and description are always in context (about 100 words), the body loads when the skill triggers (keep it under 500 lines), and bundled files load only when needed. Point clearly to each reference file and say when to read it, and give long references a table of contents. A skill covering several variants (AWS/GCP/Azure) keeps the selection logic in SKILL.md and one reference file per variant.
@@ -171,7 +171,7 @@ Measure on the agent the user actually uses (`--agent`). Without a headless CLI 
 ## Step 8: Validate, record, hand off
 
 1. `python $C/scripts/quick_validate.py <skill>` checks the spec (fields, name matches folder, lengths) and warns about agent-specific wording. Fix every warning or say why it stays.
-2. Write the `keeper.json` with rotless-skill-modernizer: run its `init` on the skill (it imports the repos from `references/prior-art.md`), curate the result with the dependency list from step 1, then run its `check` until there's no FAIL, CHANGED or GAP.
+2. Write the `rotless.json` with rotless-skill-modernizer: run its `init` on the skill (it imports the repos from `references/prior-art.md`), curate the result with the dependency list from step 1, then run its `check` until there's no FAIL, CHANGED or GAP.
 3. End the SKILL.md with the field-notes section below, unchanged except for the skill's name, so rotless-skill-refiner can learn from real use:
 
    ```markdown
@@ -187,7 +187,7 @@ Measure on the agent the user actually uses (`--agent`). Without a headless CLI 
 - If the installed copy is read-only, copy it somewhere writable, edit there, and copy back or package from the copy.
 - Snapshot it before editing; the snapshot is the baseline (`old_skill/`).
 - A skill someone else wrote belongs to them, so don't edit it unless the user owns it. Offer to draft an issue for its author instead.
-- If it has a `keeper.json`, update it in the same change and run rotless-skill-modernizer `check`.
+- If it has a `rotless.json`, update it in the same change and run rotless-skill-modernizer `check`.
 - If it has logged field notes, start from them by running rotless-skill-refiner `review` first.
 
 ## Reference files

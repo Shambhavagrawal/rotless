@@ -23,7 +23,7 @@ The problem it solves: a skill we write makes claims about things outside itself
 
 ## 2. Principles
 
-1. Only skills with a `keeper.json` are touched; that file is the opt-in and the authorship marker.
+1. Only skills with a `rotless.json` are touched; that file is the opt-in and the authorship marker.
 2. The manifest lives inside the skill, so it travels and is versioned with it. State lives outside (`<registry>/state/<skill>.json`), so the skill stays clean and shareable. The registry is an existing `skill-registry/` next to the skills folder, otherwise `~/.skill-registry`, or `$SKILL_REGISTRY`; never the install folder, since plugin updates wipe it (2026-11-02).
 3. Never put manifest data in SKILL.md frontmatter: claude.ai and the Skills API reject unknown keys, and the spec's `metadata` maps strings to strings only.
 4. Diff-only: baseline on first sight, report changes, `ack` to accept (nvchecker's `take` model).
@@ -36,9 +36,9 @@ The problem it solves: a skill we write makes claims about things outside itself
 
 ```
  your skill/                         keeper.py                          <registry>/ (git)
-   SKILL.md, references/, scripts/     init  → keeper.draft.json          state/<skill>.json   baselines, pending values
-   keeper.json  (deps, claims,         check → digest, exit 1 if fix     digests/<skill>-<date>.md
-                 landscape, verified)  ack   → keeper.json `tested`,
+   SKILL.md, references/, scripts/     init  → rotless.draft.json          state/<skill>.json   baselines, pending values
+   rotless.json  (deps, claims,         check → digest, exit 1 if fix     digests/<skill>-<date>.md
+                 landscape, verified)  ack   → rotless.json `tested`,
                                                `verified`
                                        list / status (offline)
 ```
@@ -47,20 +47,20 @@ How the skills relate (2026-11-02; this replaces the 2026-10-24 three-skill desi
 - There are four skills. Each is usable alone, names the others in a "rotless family" table, and hands off to them when they're installed: research (prior art), creator (build and test; an Apache-2.0 fork of Anthropic's skill-creator), modernizer (drift, when the world changed) and refiner (lessons from use, both fixes and optimizations).
 - rotless-github-research knows its callers and writes `prior-art.md` in the shape this skill owns. It still works with no sibling installed.
 - rotless-skill-modernizer runs `fix` and `refresh`; `new` hands off to rotless-skill-creator, which comes back for `init`. It owns the `prior-art.md` shape that rotless-github-research fills, and declares the other three skills as dependencies. `mustContain` checks the step names it relies on in each of them.
-- rotless-skill-creator names the family in its own text, so the global "Skill authoring flow" rule is optional; the rule only makes agents use the flow without being asked. The keeper.json claim that checked for that rule in the user's home folder was removed on 2026-11-02, because it failed for anyone who installed rotless without pasting the rule.
-- Ownership is explicit (2026-11-02). `check` runs the commands in a keeper.json, so only skills listed in `<registry>/owned.json` get checked. `init` adds a skill and `own` adds one by hand; a third-party skill that ships a keeper.json is skipped until the user says it's theirs. `lint` runs no code and makes no network calls, so it works on any skill and in CI.
-- A rotless-skill-modernizer `keeper.json` inside rotless-github-research is inert data: rotless-github-research never reads or mentions it.
+- rotless-skill-creator names the family in its own text, so the global "Skill authoring flow" rule is optional; the rule only makes agents use the flow without being asked. The rotless.json claim that checked for that rule in the user's home folder was removed on 2026-11-02, because it failed for anyone who installed rotless without pasting the rule.
+- Ownership is explicit (2026-11-02). `check` runs the commands in a rotless.json, so only skills listed in `<registry>/owned.json` get checked. `init` adds a skill and `own` adds one by hand; a third-party skill that ships a rotless.json is skipped until the user says it's theirs. `lint` runs no code and makes no network calls, so it works on any skill and in CI.
+- A rotless-skill-modernizer `rotless.json` inside rotless-github-research is inert data: rotless-github-research never reads or mentions it.
 
-Three layers decide who populates and maintains `keeper.json`:
-1. Capture while authoring (primary): whoever writes or edits the skill writes the manifest in the same change, because that's when the knowledge exists. Creation goes through rotless-skill-creator (Anthropic's upstream skill-creator also works, used as-is). Its Interview-and-Research step surfaces the dependencies, and rotless-skill-modernizer's SKILL.md tells the agent to write `keeper.json` along with the skill's files and to run `check` for baselines.
+Three layers decide who populates and maintains `rotless.json`:
+1. Capture while authoring (primary): whoever writes or edits the skill writes the manifest in the same change, because that's when the knowledge exists. Creation goes through rotless-skill-creator (Anthropic's upstream skill-creator also works, used as-is). Its Interview-and-Research step surfaces the dependencies, and rotless-skill-modernizer's SKILL.md tells the agent to write `rotless.json` along with the skill's files and to run `check` for baselines.
 2. Coverage safety net (automatic): every `check` rescans the text and reports, with file:line, references the manifest doesn't cover (GAP). This catches the edit where nobody updated the manifest.
 3. On-demand checks: the dependency, claim and landscape checks below run when someone asks. There's no scheduler, by decision, because a result is only useful when an agent harness and a person can act on it.
 `init` is the fallback for existing skills without a manifest.
 
 - extract (shared by init and coverage) scans SKILL.md and `references/*.md`, skipping JSON/YAML example blocks and "quoted examples". It collects commands on PATH and their subcommands (from code blocks and inline backticks), stated versions, URLs (http, mcp, doc), backticked or linked `owner/repo` names (verified to exist), and "N/min"-style limits, and records each one's first file:line.
-- init writes `keeper.draft.json` from extract, each entry with `_where`, for the author to curate.
+- init writes `rotless.draft.json` from extract, each entry with `_where`, for the author to curate.
 - coverage compares extract with the manifest: an untracked CLI, a subcommand missing from `needs`, a URL not covered (host and path prefix match), an unwatched real repo, a version in the text contradicting `tested`, or a limit no claim quote covers. It honours `ignore` (exact, word-prefix, or `*` prefix).
-- check runs every dep, claim, landscape search and the coverage scan. It groups results as Fix the skill (FAIL, CHANGED), Not tracked in keeper.json (GAP), New in the landscape, Worth a look, Baseline and OK, saves a digest and commits state. It exits 1 only for FAIL or CHANGED.
+- check runs every dep, claim, landscape search and the coverage scan. It groups results as Fix the skill (FAIL, CHANGED), Not tracked in rotless.json (GAP), New in the landscape, Worth a look, Baseline and OK, saves a digest and commits state. It exits 1 only for FAIL or CHANGED.
 - ack accepts pending values (CLI and package versions into `tested`, doc fingerprints) and stamps `verified`.
 - fix is done by the agent, following SKILL.md: read the digest, open the cited line or script, research what's true now, propose an edit, apply it on approval, re-check, then ack.
 
@@ -75,7 +75,7 @@ Implementation notes learned by testing: `gh` and `claude` exit 0 and print the 
   - A `fix` helper that turns a digest into a checklist with file/line links.
   - Extend extract and coverage beyond limits to CLI flags (`--match`) and "X doesn't support Y" statements.
   - Testing behaviour belongs to skill-creator's test-case loop (with/without-skill runs, grading, viewer), which checks that a skill works; rotless-skill-modernizer checks that it's still true. After a substantive fix, re-run the skill-creator tests if the skill has them. (If CI with Claude Code ever needs it: `claude plugin eval … --no-publish`; without the flag the report may be published to claude.ai.)
-  - Optional hook: when a file in an owned skill is edited, remind the agent to update `keeper.json`. It needs a settings change, so only if the user wants it.
+  - Optional hook: when a file in an owned skill is edited, remind the agent to update `rotless.json`. It needs a settings change, so only if the user wants it.
 
 ## 5. Prior art (researched 2026-10-24)
 

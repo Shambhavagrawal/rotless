@@ -5,7 +5,7 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 ## L-2026-11-02-2: a shortened canary still means the skill loaded
 - From: n-20261102144625-8f14 (failure) · verdict: refine
 - Change: Start: `harness.saw_canary()` matches the first 6 hex characters of the run's token; tokens are 8 hex (scripts/harness.py; used by run_eval.py and probe)
-- Check: scripts/test_harness.py L-2 (red on snapshot 20261102-144626, green after) + keeper.json command `lesson-runner-checks`
+- Check: scripts/test_harness.py L-2 (red on snapshot 20261102-144626, green after) + rotless.json command `lesson-runner-checks`
 - Why: Codex printed `ROTLESS-CANARY-63b55b6b` for a 10-character token; an exact match scored a real trigger as a miss
 
 ## L-2026-11-02-3: failed runs keep their stderr
@@ -61,3 +61,9 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `parse_frontmatter()` and `unquote()` live in utils.py; quick_validate.py imports them; `parse_skill_md()` uses them | Stop: the separate line-by-line parser in utils.py
 - Check: scripts/test_harness.py L-11 (red on snapshot 20261102-184045, green after)
 - Why: after L-6 the validator accepted a description written on the next line, but `run_eval.py` and `make_eval_review.py` read it as empty
+
+## L-2026-11-02-12: the validator accepts rotless.json and the old keeper.json
+- From: rename decision, 2026-11-02 · verdict: fix
+- Change: Start: `quick_validate` counts either name as a tracked manifest and suggests rotless.json when there is none
+- Check: scripts/test_harness.py L-12 (red on snapshot 20261102-195834, green after)
+- Why: the manifest was renamed from keeper.json to rotless.json; skills with the old name must not be told their dependencies are untracked

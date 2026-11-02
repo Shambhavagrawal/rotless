@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .venv/
 .DS_Store
+rotless.draft.json
 keeper.draft.json
 # rotless-skill-creator writes test runs next to the skill and packages into the current folder
 *-workspace/
