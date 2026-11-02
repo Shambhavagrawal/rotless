@@ -18,6 +18,17 @@ It runs the repo check (`tests/check_repo.py`), each skill's self-tests and less
 
 These need no network and no agent CLI. Two more checks call live services and stay local, because they need tokens and quota: `keeper.py check <skill>` (after `keeper.py own <skill>`) and the creator's test runs.
 
+## Developing in your agent's skills folder
+
+If you work on the skills where your agent loads them, for example `~/.claude/skills`, copy them into the repo before committing:
+
+```bash
+python scripts/sync_skills.py --dry-run   # what would change
+python scripts/sync_skills.py             # copy, then run the checks
+```
+
+Use `--from <folder>` for another skills folder. It copies only the skills already in `skills/`, leaves out caches, test workspaces and drafts, stores text with LF line endings, and won't overwrite uncommitted changes.
+
 ## What a good pull request has
 
 - One change, explained in a few sentences.
