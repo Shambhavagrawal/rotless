@@ -33,6 +33,14 @@ srcsweep.run_source("mcp", "repository discovery", 3)
 if not urls or "search=repository&" not in urls[0]:
     fails.append(f"L-1: mcp must search the first word only (asked for {urls[:1]})")
 
+# L-4: hf-papers is a search source; a paper's linked GitHub repo feeds --repos
+srcsweep.get = lambda url, headers=None: [{"paper": {"id": "2605.09359", "title": "Skill-R1: Agent Skill Evolution",
+                                                    "githubRepo": "https://github.com/octo/skill-r1", "upvotes": 3,
+                                                    "publishedAt": "2026-05-10T00:00:00.000Z"}}]
+_, res, err = srcsweep.run_source("hf-papers", "skill evolution", 3)
+if err or not res or res[1][0]["repo"] != "https://github.com/octo/skill-r1" or not res[1][0]["url"].endswith("/papers/2605.09359"):
+    fails.append(f"L-4: hf-papers must search papers and keep the linked repo (err={err}, got={res})")
+
 
 # L-2: a GraphQL call that fails as a whole (rate limit, bad token) aborts instead of reporting every repo as NOT FOUND
 ghverify = load("ghverify")
@@ -75,4 +83,4 @@ if not rows or rows[0].get("noise") is not True:
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("ok: 3 research-script lessons hold")
+print("ok: 4 research-script lessons hold")

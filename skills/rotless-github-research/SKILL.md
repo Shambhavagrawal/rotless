@@ -26,7 +26,7 @@ Helpers live in this skill's `scripts/` folder. Set `S` to that folder's absolut
 | `gh search issues … --include-prs` | issue/PR text | repos + real-world pain points (needs specific phrases; generic words drown in bot issues) |
 | `ghverify.py` | GraphQL batch, 25 repos/call | existence, renames, real activity, health, evidence, warning flags |
 | `gh repo read-dir` / `read-file`, `gh api …/contents` | one repo's files, no clone | confirming real code |
-| `srcsweep.py` | 20 non-GitHub sources in parallel: npm, crates, Packagist, Hex, NuGet, Maven, RubyGems, Hackage, Docker Hub, ArtifactHub, AUR, Open VSX, GitLab, Codeberg, MCP Registry, skills.sh, Hugging Face (models/datasets/spaces), Hacker News | prior art outside GitHub; ends with a ledger of sources searched / **not reached**; `--repos` pipes GitHub repos into `ghverify.py -` |
+| `srcsweep.py` | 21 non-GitHub sources in parallel: npm, crates, Packagist, Hex, NuGet, Maven, RubyGems, Hackage, Docker Hub, ArtifactHub, AUR, Open VSX, GitLab, Codeberg, MCP Registry, skills.sh, Hugging Face (models/datasets/spaces/papers, with the code repo a paper links), Hacker News | prior art outside GitHub; ends with a ledger of sources searched / **not reached**; `--repos` pipes GitHub repos into `ghverify.py -` |
 | `references/sources.md` | endpoint notes + sources with no search API (PyPI, Homebrew, pkg.go.dev, Product Hunt, Reddit) | manual follow-ups |
 
 ### gh search rules that matter (tested; ignoring them silently returns `[]` or wrong results)
@@ -95,7 +95,7 @@ gh api -X GET search/topics -f q=sarkari --jq '.items[].name'   # discover topic
 
 **F. Off-GitHub:** one command, several wordings (1–3 words each; registries AND the terms):
 ```bash
-python "$S/srcsweep.py" "repository discovery" --limit 4        # 20 sources, ~10s, ends with a searched / NOT REACHED ledger
+python "$S/srcsweep.py" "repository discovery" --limit 4        # 21 sources, ~10s, ends with a searched / NOT REACHED ledger
 python "$S/srcsweep.py" "sarkari" --repos | python "$S/ghverify.py" -   # GitHub repos linked from the results, verified
 ```
 Then use web search for what has no search API (PyPI `site:pypi.org`, Homebrew, pkg.go.dev, Product Hunt, Reddit, blogs, `awesome <topic>`). For prior-art/competitive research also list notable **commercial** products. Non-GitHub hits (GitLab, Codeberg, registry-only) can't go through `ghverify.py`: check them by hand and mark evidence as Documented/Metadata.

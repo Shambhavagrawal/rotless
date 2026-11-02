@@ -19,3 +19,9 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: each row gets `noise` before the JSON branch (scripts/ghsweep.py)
 - Check: scripts/test_offline.py L-3
 - Why: agents reading `--json` lost the `[noise?]` signal the table shows
+
+## L-2026-11-02-4: papers are a search source, and their code repos feed --repos
+- From: n-20261102143313-1e11 (missing) · verdict: fix
+- Change: Start: `hf-papers` in srcsweep.py (Hugging Face paper search; a paper's `githubRepo` goes in `repo`, so `--repos | ghverify.py -` verifies the code behind a paper); SKILL.md and README say 21 sources
+- Check: scripts/test_offline.py L-4 (red on snapshot 20261102-185023, green after); live: "skill evolution" gave 120 papers and repos such as Zhouyaner/Eviskill
+- Why: keeper.json monitored the papers endpoint and sources.md documented it, but `--sources hf-papers` failed with "unknown source"

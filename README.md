@@ -8,7 +8,7 @@ rotless is four [Agent Skills](https://agentskills.io) that build skills which s
 
 | Skill | Job |
 |---|---|
-| **rotless-github-research** | Before you build: finds every repo, package and tool that already does it (code search, repo search, commits, issues, plus 20 sources off GitHub such as npm, crates.io, Docker Hub, Hugging Face and the MCP Registry), verifies each one, and tells you what to reuse, what to borrow and where the gap is. |
+| **rotless-github-research** | Before you build: finds every repo, package and tool that already does it (code search, repo search, commits, issues, plus 21 sources off GitHub such as npm, crates.io, Docker Hub, Hugging Face models and papers, and the MCP Registry), verifies each one, and tells you what to reuse, what to borrow and where the gap is. |
 | **rotless-skill-creator** | Builds the skill: a failing baseline first, an interview, the draft, test cases run with and without the skill, a review viewer, trigger tuning, and spec + portability validation. Runs tests on Claude Code, Codex and other agent CLIs. |
 | **rotless-skill-modernizer** | Keeps it true as the world changes: a `keeper.json` lists every CLI, API, MCP server, repo, doc and limit the skill relies on, each with a check. `check` tells you what drifted and the exact line to fix. |
 | **rotless-skill-refiner** | Makes it better from real use: fixes when something went wrong, optimizations when it worked but could be faster, cheaper or simpler. Notes get logged while you work, and a retro turns them into small edits, **each with a check**: a fix must fail on the old skill and pass on the new one; an optimization must measure better on the same test cases with nothing worse. Each pass leaves the next one better. |

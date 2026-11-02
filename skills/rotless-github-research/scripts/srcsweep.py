@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Search ~20 non-GitHub sources at once for prior art, in parallel, no auth.
+"""Search ~21 non-GitHub sources at once for prior art, in parallel, no auth.
 
 Package registries (npm, crates.io, Packagist, Hex, NuGet, Maven Central, RubyGems, Hackage,
 Docker Hub, ArtifactHub, AUR, Open VSX), other forges (GitLab, Codeberg), agent ecosystems
-(MCP Registry, skills.sh), Hugging Face (models/datasets/spaces) and Hacker News.
+(MCP Registry, skills.sh), Hugging Face (models/datasets/spaces/papers) and Hacker News.
 
 Ends with a source ledger: which sources were searched and which were NOT reached (with
 the error), so "nothing found" is never stated for a source that actually failed.
@@ -156,6 +156,14 @@ def hf(kind):
     return run
 
 
+def hf_papers(q, n):
+    # papers are prior art too; a paper's linked repo goes in `repo`, so --repos hands it to ghverify (lesson L-2026-11-02-4)
+    d = get(f"https://huggingface.co/api/papers/search?q={q}")  # no size parameter: relevance order, so take the top n
+    return len(d), [item(p["paper"]["id"], p["paper"].get("title"), f"https://huggingface.co/papers/{p['paper']['id']}",
+                         p["paper"].get("githubRepo") or "",
+                         f"{p['paper'].get('upvotes', 0)} upvotes {(p['paper'].get('publishedAt') or '')[:10]}") for p in d[:n]]
+
+
 def hn(q, n):
     d = get(f"https://hn.algolia.com/api/v1/search?query={q}&tags=story&hitsPerPage={n}")
     return d["nbHits"], [item(h["title"], "", f"https://news.ycombinator.com/item?id={h['objectID']}",
@@ -165,7 +173,7 @@ def hn(q, n):
 SOURCES = {"npm": npm, "crates": crates, "packagist": packagist, "hex": hex_, "nuget": nuget, "maven": maven,
            "rubygems": rubygems, "hackage": hackage, "dockerhub": dockerhub, "artifacthub": artifacthub, "aur": aur,
            "openvsx": openvsx, "gitlab": gitlab, "codeberg": codeberg, "mcp": mcp, "skills": skills,
-           "hf-models": hf("models"), "hf-datasets": hf("datasets"), "hf-spaces": hf("spaces"), "hn": hn}
+           "hf-models": hf("models"), "hf-datasets": hf("datasets"), "hf-spaces": hf("spaces"), "hf-papers": hf_papers, "hn": hn}
 
 
 def run_source(name, q, n):
