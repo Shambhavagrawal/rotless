@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 (2026-11-02)
 
 - Skills remind you to check them: `rotless.json` records when a skill was last `updated` and `checked`, and when both are more than `remindAfterDays` old (15 by default) the skill offers a modernizer check at the end of a task. New `keeper.py updated` command; `list` and `status` show each skill's age.
 - New repos found in a skill's space stay listed in every check until reviewed, and the modernizer offers to research what to borrow from them.

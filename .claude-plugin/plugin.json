@@ -1,7 +1,7 @@
 {
   "name": "rotless",
   "description": "Four agent skills for writing skills that stay accurate: research prior art, build and test a skill, check what it relies on for drift, and turn lessons from real use into small edits that each come with a check.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "Shambhav Agrawal"
   },
