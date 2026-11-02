@@ -115,3 +115,9 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `set_frontmatter` also takes blank lines that are followed by more indented lines of the same value (scripts/harness.py)
 - Check: scripts/test_harness.py L-20 (red on snapshot r11-snap, green after)
 - Why: a `description: |` with two paragraphs kept its second paragraph after the key was replaced, which left broken YAML in the test copy
+
+## L-2026-11-02-21: trigger queries don't hand the agent a file to open
+- From: n-20261102223010-3b3c (failure) · verdict: fix
+- Change: Start: SKILL.md step 7 says trigger runs get no input files, so a query must not hand the agent something to open first; the creator's own query was rewritten to stand on its own (evals/trigger-eval.json)
+- Check: the creator's 20 trigger queries on Claude Code 2.1.316, 3 runs each: 19/20 before (the old query triggered 0 of 3), 20/20 after (the new one 3 of 3)
+- Why: the agent replied "I couldn't find your invoice-ocr SKILL.md" and asked for it before loading any skill; it had already planned to use this skill

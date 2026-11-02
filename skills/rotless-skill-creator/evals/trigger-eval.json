@@ -8,7 +8,7 @@
  {"query": "ugh, my pdf-invoices skill mangled the tables again, make sure it stops happening", "should_trigger": false},
  {"query": "write a python function that parses dates like 03/11/2026 and 2026-11-03", "should_trigger": false},
  {"query": "make me a skill that writes our weekly investor update from the metrics sheet, it has to work in gemini cli too", "should_trigger": true},
- {"query": "here's my SKILL.md for invoice-ocr, write test cases for it and run them against no skill so I can see if it helps", "should_trigger": true},
+ {"query": "I wrote a skill that pulls totals out of invoice PDFs. set up test cases that run it with and without the skill so I can see if it actually helps", "should_trigger": true},
  {"query": "package my standup-summary skill so my teammate can install it", "should_trigger": true},
  {"query": "the description on my k8s-debug skill is too vague, it fires on every kubernetes question. tune it", "should_trigger": true},
  {"query": "I keep pasting the same 12-step release checklist into chat, can you make that a reusable skill", "should_trigger": true},

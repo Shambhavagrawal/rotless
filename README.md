@@ -130,7 +130,7 @@ Verified:
 - Skill loading and headless test runs on Claude Code and Codex, and the Codex plugin install.
 - The offline checks, on Linux and Windows with Python 3.10 and 3.13, in CI on every push.
 - The Claude Code plugin manifest, with `claude plugin validate`.
-- Triggering on Claude Code: 79 of 80 trigger-test queries right (20 per skill, 3 runs each; [docs/harnesses.md](docs/harnesses.md#test-record) has the details).
+- Triggering on Claude Code: all 80 trigger-test queries right after one test query was fixed (20 per skill, 3 runs each), measured on the maintainer's machine; [docs/harnesses.md](docs/harnesses.md#test-record) has the details and caveats.
 
 Not verified yet:
 - Triggering on other agents. The test sets are in each skill's `evals/trigger-eval.json`.

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- rotless-skill-creator step 7: trigger queries must not hand the agent a file to open, since trigger runs get none; the creator's own trigger set now passes 20/20 on Claude Code.
+
 ## 0.2.0 (2026-11-02)
 
 - Skills remind you to check them: `rotless.json` records when a skill was last `updated` and `checked`, and when both are more than `remindAfterDays` old (15 by default) the skill offers a modernizer check at the end of a task. New `keeper.py updated` command; `list` and `status` show each skill's age.

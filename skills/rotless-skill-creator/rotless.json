@@ -201,7 +201,7 @@
   },
   "updated": {
     "date": "2026-11-02",
-    "note": "L-2026-11-02-20: set_frontmatter keeps block descriptions whole"
+    "note": "L-2026-11-02-21: self-contained trigger queries"
   },
   "checked": "2026-11-02"
 }
