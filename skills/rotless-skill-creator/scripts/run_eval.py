@@ -34,6 +34,8 @@ def split(items, holdout, seed):
         group = [i for i in items if bool(i["should_trigger"]) == flag]
         rnd.shuffle(group)
         k = round(len(group) * holdout)
+        if len(group) >= 2:  # a small set still gets a test and a train side (lesson L-2026-11-02-9)
+            k = min(max(k, 1), len(group) - 1)
         test += group[:k]
         train += group[k:]
     return train, test

@@ -76,11 +76,17 @@ def fetch(batch):
     query = "{ " + " ".join(parts) + " }" + FRAGMENT
     r = subprocess.run(["gh", "api", "graphql", "-f", f"query={query}"],
                        capture_output=True, text=True, encoding="utf-8")
-    # NOT_FOUND repos make gh exit non-zero but stdout still carries the data.
+    # NOT_FOUND repos make gh exit non-zero but stdout still carries the data. Any other error
+    # (rate limit, bad token, outage) means the batch wasn't checked: stop rather than call every repo
+    # NOT FOUND (lesson L-2026-11-02-2).
     try:
-        return json.loads(r.stdout).get("data") or {}
+        out = json.loads(r.stdout)
     except json.JSONDecodeError:
         sys.exit(f"GraphQL call failed: {r.stderr.strip()}")
+    fatal = [e.get("message", "") for e in out.get("errors") or [] if e.get("type") != "NOT_FOUND"]
+    if fatal:
+        sys.exit(f"GraphQL call failed: {'; '.join(fatal)[:300]}")
+    return out.get("data") or {}
 
 
 def days_since(iso, now):

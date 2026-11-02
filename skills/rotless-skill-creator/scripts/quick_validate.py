@@ -9,6 +9,7 @@ strings, plus non-fatal portability warnings (Claude-only tool names, paths and 
 
 Exit 0 when valid (warnings don't fail unless --strict), 1 otherwise.
 """
+import json
 import re
 import sys
 from pathlib import Path
@@ -31,6 +32,23 @@ PORTABILITY = [
 OTHER_AGENTS = re.compile(r"codex|gemini|cursor|copilot|opencode|AGENTS\.md|other agents|any agent|e\.g\.|optional", re.I)
 
 
+def unquote(v):
+    """A YAML scalar as written: unescape double quotes the way YAML does (JSON-compatible) and '' in single quotes."""
+    v = v.strip()
+    if len(v) >= 2 and v[0] == v[-1] == '"':
+        try:
+            return json.loads(v)
+        except ValueError:
+            return v[1:-1]
+    if len(v) >= 2 and v[0] == v[-1] == "'":
+        return v[1:-1].replace("''", "'")
+    return v
+
+
+# YAML would read these as numbers, booleans, null, lists or maps, not strings
+NON_STRING = re.compile(r'^(true|false|yes|no|on|off|null|~|[-+]?\d+(\.\d+)?|\[.*\]|\{.*\})$', re.I)
+
+
 def counts_as_skill_md(rel):
     parts = rel.parts[:-1]
     return not any(p in EXCLUDED_DIR_PARTS for p in parts) and not (parts and parts[0] in ROOT_EXCLUDED_DIR_PARTS)
@@ -46,7 +64,9 @@ def parse_frontmatter(text):
         top = re.match(r'^([A-Za-z][\w-]*):\s*(.*)$', line)
         if top:
             key, val = top.group(1), top.group(2).strip()
-            fm[key] = {} if val == '' else val
+            # only metadata is a mapping; any other key with its value on the next lines is a string
+            # (a description line like 'Use this when: …' must not turn into a map; lesson L-2026-11-02-6)
+            fm[key] = ({} if key == 'metadata' else '') if val == '' else val
         elif key is not None and line[:1] in (' ', '\t') and line.strip():
             sub = re.match(r'^\s+([\w.-]+):\s*(.*)$', line)
             if isinstance(fm[key], dict) and sub:
@@ -57,7 +77,7 @@ def parse_frontmatter(text):
         if isinstance(v, str):
             if v in ('>', '|', '>-', '|-'):
                 fm[k] = ''
-            fm[k] = re.sub(r'^([>|]-?)\s+', '', fm[k]).strip().strip('"').strip("'")
+            fm[k] = unquote(re.sub(r'^([>|]-?)\s+', '', fm[k]).strip())
     return fm, text[m.end():]
 
 
@@ -106,6 +126,10 @@ def validate_skill(skill_path):
         return False, f"Compatibility is too long ({len(comp)} characters, maximum 500)", []
     if 'metadata' in fm and not isinstance(fm['metadata'], dict):
         return False, "metadata must be a mapping of string keys to string values", []
+    for k, v in (fm.get('metadata') or {}).items():
+        if v == '' or (NON_STRING.match(v) and v[:1] not in ('"', "'")):
+            return False, (f"metadata.{k} must be a string (the spec allows string values only): "
+                           f"quote it, e.g. {k}: \"{v}\""), []
 
     warnings = []
     if not (skill_path / "keeper.json").is_file():

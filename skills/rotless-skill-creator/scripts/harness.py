@@ -89,9 +89,11 @@ def make_workspace(skill_dir=None, as_name=None, description=None, canary=None, 
         text = set_frontmatter(text, "name", name)
         if description is not None:
             text = set_frontmatter(text, "description", description)
-        if canary:
-            text += (f"\n\n<!-- test run -->\nWhenever you use this skill, end your reply with this exact token "
-                     f"on its own line: {canary}\n")
+        if canary:  # top of the body, so an agent stopped early (permissions, turn limit) has still read it (L-2026-11-02-8)
+            m = re.match(r"^---\r?\n.*?\r?\n---\r?\n?", text, re.S)
+            note = (f"\n<!-- test run -->\nWhenever you use this skill, put this exact token on a line of its own in your "
+                    f"reply (the first line is fine, even if you can't finish the task): {canary}\n\n")
+            text = text[:m.end()] + note + text[m.end():]
         for d in SKILL_DIRS:
             dst = ws / d / name
             shutil.copytree(skill_dir, dst, ignore=shutil.ignore_patterns("evals", "__pycache__", "*-workspace"))

@@ -112,6 +112,8 @@ def main():
             "stars": lambda r: r["stars"],
             "hits": lambda r: (len(r["matched"]), r["stars"])}
     rows.sort(key=keys[args.order], reverse=True)
+    for r in rows:  # computed before --json so both outputs carry it (lesson L-2026-11-02-3)
+        r["noise"] = bool(NOISE.search(r["fullName"].split("/")[1]) or any(NOISE.search(t) for t in r["topics"]))
 
     if args.json:
         json.dump(rows, sys.stdout, indent=1)
@@ -126,7 +128,7 @@ def main():
     print("pushed     | stars | repo | lang | hits | description")
     for r in shown:
         flags = (" [fork]" if r["isFork"] else "") + (" [archived]" if r["isArchived"] else "")
-        if NOISE.search(r["fullName"].split("/")[1]) or any(NOISE.search(t) for t in r["topics"]):
+        if r["noise"]:
             flags += " [noise?]"
         print(f"{r['pushedAt'][:10]} | {r['stars']:>5} | {r['fullName']}{flags} | "
               f"{r['language'] or '-'} | {len(r['matched'])} | {r['description'].replace(chr(10), ' ')[:100]}")

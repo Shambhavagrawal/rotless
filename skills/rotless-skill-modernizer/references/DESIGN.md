@@ -1,6 +1,6 @@
 # rotless-skill-modernizer: design
 
-Status 2026-10-24: core loop implemented (`scripts/keeper.py`: init / check / ack / list / status), two skills maintained (rotless-github-research, rotless-skill-modernizer itself).
+Status 2026-11-02: core loop implemented (`scripts/keeper.py`: init / check / ack / own / lint / list / status). Part of the four rotless skills (research, creator, modernizer, refiner), all maintained with it. The history below keeps the 2026-10-24 decisions; where they changed, it says so.
 
 ## 1. Scope (decided)
 
@@ -43,14 +43,16 @@ The problem it solves: a skill we write makes claims about things outside itself
                                        list / status (offline)
 ```
 
-**How the three skills relate (decided 2026-10-24):**
-- **rotless-github-research is independent.** It doesn't know the other two, and its SKILL.md never mentions them.
+**How the skills relate (2026-11-02; replaces the 2026-10-24 three-skill design, where research didn't know the others and the build step was Anthropic's unmodified skill-creator):**
+- **Four skills, each usable alone, each naming the others** in a "rotless family" table and handing off when they're installed: research (prior art), creator (build and test; an Apache-2.0 fork of Anthropic's skill-creator), modernizer (drift: the world changed), refiner (lessons from use: fixes and optimizations).
+- **rotless-github-research** knows its callers and writes `prior-art.md` in the shape this skill owns; it still works with no sibling installed.
 - **rotless-skill-modernizer knows both.** It orchestrates `new`/`fix`, owns the `prior-art.md` shape it asks rotless-github-research to fill, and declares both as dependencies. `mustContain` checks the rotless-github-research and skill-creator step names it relies on.
-- **skill-creator should know the other two**, but it's Anthropic's skill: not edited by us, and overwritten by claude.ai sync. Its awareness comes from the Skill authoring flow rule in the user's global agent instructions file (CLAUDE.md, AGENTS.md, GEMINI.md…; added 2026-10-24, loaded in every session); a claim in keeper.json checks the rule is still there.
+- **rotless-skill-creator knows the family in its own text**, so the global "Skill authoring flow" rule is optional (it makes agents use the flow without being asked). The keeper.json claim that checked for that rule in the user's home folder was removed on 2026-11-02: it failed for anyone who installed rotless without pasting the rule.
+- **Ownership is explicit** (2026-11-02): `check` runs the commands in a keeper.json, so only skills in `<registry>/owned.json` get checked. `init` adds a skill, `own` adds one by hand; a third-party skill that ships a keeper.json is skipped until the user says it's theirs. `lint` runs no code and no network, so it works on any skill (and in CI).
 - A rotless-skill-modernizer `keeper.json` inside rotless-github-research is inert data: rotless-github-research never reads or mentions it.
 
 Three layers decide who populates and maintains `keeper.json`:
-1. **Capture while authoring** (primary): whoever writes or edits the skill writes the manifest in the same change, because that's when the knowledge exists. Creation usually goes through Anthropic's `skill-creator` (used as-is, never modified); its Interview-and-Research step surfaces the dependencies, and rotless-skill-modernizer's SKILL.md tells the agent to write `keeper.json` when the skill's files are written and to run `check` for baselines.
+1. **Capture while authoring** (primary): whoever writes or edits the skill writes the manifest in the same change, because that's when the knowledge exists. Creation goes through rotless-skill-creator (Anthropic's upstream skill-creator also works, used as-is); its Interview-and-Research step surfaces the dependencies, and rotless-skill-modernizer's SKILL.md tells the agent to write `keeper.json` when the skill's files are written and to run `check` for baselines.
 2. **Coverage safety net** (automatic): every `check` rescans the text and reports references the manifest doesn't cover (GAP), with file:line. Catches the edit where nobody updated the manifest.
 3. **On-demand checks**: the dependency/claim/landscape checks below, run when someone asks (no scheduler, by decision: a result is only useful when an agent harness and a person can act on it).
 `init` is the fallback for existing skills without a manifest.

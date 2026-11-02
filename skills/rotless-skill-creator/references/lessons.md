@@ -25,3 +25,33 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: `run_eval.summarise()` rates triggers over completed runs only; a query with none is no data (pass null) and `score()` leaves it out, reporting `no_data` (scripts/run_eval.py)
 - Check: scripts/test_harness.py L-5 (red on snapshot 20261102-145308, green after)
 - Why: when Codex hit its usage limit, 8 of 12 runs errored and the old scoring reported accuracy 1.0, because never-run negatives "passed"
+
+## L-2026-11-02-6: the validator reads multi-line descriptions and rejects non-string metadata
+- From: external code review (Gemini), 2026-11-02 · verdict: fix
+- Change: Start: only `metadata` is parsed as a mapping; metadata values that YAML would read as numbers, booleans, null, lists or maps are rejected with "quote it" (scripts/quick_validate.py)
+- Check: scripts/test_harness.py L-6 (red on snapshot 20261102-175456, green after)
+- Why: a description on the next line containing a colon became a map and the valid skill was rejected
+
+## L-2026-11-02-7: quoted YAML values read back as written
+- From: external code review (Gemini), 2026-11-02 · verdict: fix
+- Change: Start: `unquote()` in utils.py and quick_validate.py unescapes double-quoted (JSON-compatible) and single-quoted values
+- Check: scripts/test_harness.py L-7
+- Why: a description with quotes written by `set_frontmatter` came back with literal backslashes
+
+## L-2026-11-02-8: the canary instruction sits at the top of the body
+- From: external code review (Gemini), 2026-11-02 · verdict: fix
+- Change: Start: `make_workspace` inserts it right after the frontmatter and asks for the token even if the task can't finish (scripts/harness.py)
+- Check: scripts/test_harness.py L-8
+- Why: an agent stopped early by permissions or a turn limit may never reach the end of a long SKILL.md
+
+## L-2026-11-02-9: small eval sets keep both splits
+- From: external code review (Gemini), 2026-11-02 · verdict: fix
+- Change: Start: with 2+ queries in a group, test and train each get at least one (scripts/run_eval.py)
+- Check: scripts/test_harness.py L-9
+- Why: `--holdout 0.2` on 2 queries per group gave an empty test split
+
+## L-2026-11-02-10: the eval review page is filled safely
+- From: external code review (Gemini), 2026-11-02 · verdict: fix
+- Change: Start: `scripts/make_eval_review.py` HTML-escapes name and description and writes `<` as \u003c inside the script block, in one pass; SKILL.md step 7 uses it
+- Check: scripts/test_harness.py L-10
+- Why: replacing the placeholders by hand let a query containing `</script>` break the page

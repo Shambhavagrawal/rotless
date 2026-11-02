@@ -1,6 +1,20 @@
 """Shared utilities for skill-creator scripts."""
 
+import json
 from pathlib import Path
+
+
+def unquote(v):
+    """A YAML scalar as written: unescape double quotes the way YAML does (JSON-compatible) and '' in single quotes."""
+    v = v.strip()
+    if len(v) >= 2 and v[0] == v[-1] == '"':
+        try:
+            return json.loads(v)
+        except ValueError:
+            return v[1:-1]
+    if len(v) >= 2 and v[0] == v[-1] == "'":
+        return v[1:-1].replace("''", "'")
+    return v
 
 
 
@@ -28,7 +42,7 @@ def parse_skill_md(skill_path: Path) -> tuple[str, str, str]:
     while i < len(frontmatter_lines):
         line = frontmatter_lines[i]
         if line.startswith("name:"):
-            name = line[len("name:"):].strip().strip('"').strip("'")
+            name = unquote(line[len("name:"):])
         elif line.startswith("description:"):
             value = line[len("description:"):].strip()
             # Handle YAML multiline indicators (>, |, >-, |-)
@@ -41,7 +55,7 @@ def parse_skill_md(skill_path: Path) -> tuple[str, str, str]:
                 description = " ".join(continuation_lines)
                 continue
             else:
-                description = value.strip('"').strip("'")
+                description = unquote(value)
         i += 1
 
     return name, description, content

@@ -22,4 +22,7 @@ jobs:
           python skills/rotless-skill-refiner/scripts/notes.py selftest
           python skills/rotless-skill-creator/scripts/test_harness.py
           python skills/rotless-skill-modernizer/scripts/test_cli_shims.py
+          python skills/rotless-skill-modernizer/scripts/test_keeper.py
+          python skills/rotless-github-research/scripts/test_offline.py
+          python skills/rotless-skill-modernizer/scripts/keeper.py lint skills/*/
           for s in skills/*/; do python skills/rotless-skill-creator/scripts/quick_validate.py "$s" --strict; done

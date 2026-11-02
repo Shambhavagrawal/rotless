@@ -87,19 +87,15 @@
       "id": "lesson-cli-shims",
       "run": "python scripts/test_cli_shims.py",
       "why": "lesson L-2026-11-02-1: keeper.run must launch .CMD/.BAT shim CLIs on Windows"
-    }
-  ],
-  "claims": [
+    },
     {
-      "id": "claude-md-flow-rule",
-      "quote": "Skill authoring flow rule in the user's global agent instructions file",
-      "check": {
-        "run": "python -c \"import pathlib;h=pathlib.Path.home();print(''.join(p.read_text(encoding='utf-8') for p in [h/'.claude'/'CLAUDE.md',h/'.codex'/'AGENTS.md',h/'.gemini'/'GEMINI.md',h/'.config'/'opencode'/'AGENTS.md'] if p.is_file()))\"",
-        "regex": "## Skill authoring flow"
-      },
-      "why": "skill-creator can't be edited; this rule is how it learns about rotless-github-research and rotless-skill-modernizer"
+      "type": "command",
+      "id": "lesson-keeper-checks",
+      "run": "python scripts/test_keeper.py",
+      "why": "lessons L-2026-11-02-2..7: python mapping, {skill} paths, GraphQL errors, backticked quotes, ownership gate, lint"
     }
   ],
+  "claims": [],
   "landscape": {
     "searches": [
       {

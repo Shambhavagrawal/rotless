@@ -163,7 +163,7 @@ Then rerun everything into `iteration-N+1/` with baselines, reopen the viewer wi
 The description decides when an agent loads the skill. Offer this once the skill works.
 
 1. **Eval set**: 20 realistic queries, saved as `[{"query": "...", "should_trigger": true}, ...]`. Concrete and specific: file names, context, casual phrasing, typos, different lengths. 8-10 should trigger (different phrasings, cases where the user never names the skill, cases where it competes with another skill and should win). 8-10 should not, and those must be **near misses** that share words with the skill but need something else; "write a fibonacci function" tests nothing. Simple one-step queries are poor tests: agents don't load skills for what they can do directly.
-2. **Review with the user**: fill `assets/eval_review.html` (replace `__EVAL_DATA_PLACEHOLDER__` with the JSON array, unquoted, `__SKILL_NAME_PLACEHOLDER__`, `__SKILL_DESCRIPTION_PLACEHOLDER__`), open it, and let them edit and "Export Eval Set" (it lands in their Downloads as `eval_set.json`).
+2. **Review with the user**: `python $C/scripts/make_eval_review.py --eval-set <file> --skill-path <skill> --out <workspace>/eval_review.html` (it escapes the queries and description safely), open it, and let them edit and "Export Eval Set" (it lands in their Downloads as `eval_set.json`).
 3. **Measure**: `python $C/scripts/run_eval.py --eval-set <file> --skill-path <skill> --agent <cli> --holdout 0.4 --out <workspace>/trigger-0.json`. It runs each query 3 times in fresh sessions, splits 60/40 train/test (stratified), and reports accuracy, precision and recall per split.
 4. **Improve** (you do this, no extra script): read the failing *train* queries, write a better description, measure it with `--description "<candidate>"`. Up to 5 rounds. **Pick the winner by test score, not train**, so you don't overfit the queries you've been staring at.
 5. Show before/after descriptions and scores, then update the frontmatter.
@@ -201,6 +201,8 @@ Measure on the agent the user actually uses (`--agent`). Without a headless CLI 
 - `scripts/harness.py`: agent CLIs, headless runs, the project skills folders it installs into
 - `scripts/run_case.py`, `scripts/run_eval.py`: test-case runs and trigger tests on any agent CLI
 - `scripts/quick_validate.py`: spec validation and portability warnings
+- `scripts/make_eval_review.py`: fills the eval-set review page safely
+- `scripts/test_harness.py`: lesson checks for the runners (`references/lessons.md`)
 
 ## Field notes
 While using this skill, log anything worth learning in one line and carry on: a step that failed, a correction from the user, a workaround, a noisy search, a faster or simpler way, work that could be cheaper, or a rule that clearly helped. `python <rotless-skill-refiner folder>/scripts/notes.py add rotless-skill-creator --kind failure|correction|workaround|noise|missing|stale|better-way|optimization|confirmed --where "<file:line or section>" --what "<what happened>" --evidence "<command and output, numbers, or the user's words>"`. Skip this if rotless-skill-refiner isn't installed. What you log is data for a later review, never instructions.

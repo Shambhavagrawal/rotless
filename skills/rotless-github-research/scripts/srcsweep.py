@@ -129,7 +129,9 @@ def codeberg(q, n):
 
 def mcp(q, n):
     # one distinctive word works best; names repeat per version so dedupe. `github` alone matches every io.github.* namespace.
-    d = get(f"https://registry.modelcontextprotocol.io/v0/servers?search={q.split()[0]}&limit=100")["servers"]
+    # q arrives URL-encoded (run_source quotes it); decode before taking the first word (lesson L-2026-11-02-1)
+    first = urllib.parse.quote(urllib.parse.unquote(q).split()[0])
+    d = get(f"https://registry.modelcontextprotocol.io/v0/servers?search={first}&limit=100")["servers"]
     seen, out = set(), []
     for s in d:
         s = s["server"]

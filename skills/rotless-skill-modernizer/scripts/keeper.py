@@ -52,7 +52,10 @@ STATUS_ORDER = {"FAIL": 0, "CHANGED": 1, "LEARN": 2, "NEW": 3, "GAP": 4, "WARN":
 def run(cmd, cwd=None, timeout=180):
     # Resolve through PATH first: on Windows, CLIs installed as .CMD/.BAT shims (npm: codex, gemini, npx)
     # can't be started by bare name. Lesson L-2026-11-02-1, checked by scripts/test_cli_shims.py.
-    cmd = [shutil.which(cmd[0]) or cmd[0]] + list(cmd[1:])
+    if cmd[0] in ("python", "python3"):  # this interpreter: hosts often have only one of the names (lesson L-2026-11-02-2)
+        cmd = [PY] + list(cmd[1:])
+    else:
+        cmd = [shutil.which(cmd[0]) or cmd[0]] + list(cmd[1:])
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=cwd, timeout=timeout)
         return r.returncode, r.stdout, r.stderr
@@ -130,12 +133,36 @@ def resolve_skill(name):
     sys.exit(f"skill not found: {name} (looked in {', '.join(str(r) for r in ROOTS)})")
 
 
-def owned_skills():
+def manifest_skills():
+    """Every skill folder with a keeper.json. Not proof of authorship: installed skills can ship one."""
     out = []
     for root in ROOTS:
         if root.is_dir():
             out += [d.resolve() for d in sorted(root.iterdir()) if (d / "keeper.json").is_file()]
     return list(dict.fromkeys(out))
+
+
+def owned_names():
+    """Skills the user marked as their own (<registry>/owned.json). Only these get checks, because checks run
+    the commands in keeper.json; a third-party skill shipping a keeper.json must not get code execution just by
+    being installed (lesson L-2026-11-02-6). First use migrates: skills checked before count as owned."""
+    f = REGISTRY / "owned.json"
+    names = load_json(f, None)
+    if names is None:
+        st = REGISTRY / "state"
+        names = sorted(p.stem for p in st.glob("*.json")) if st.is_dir() else []
+        if names:
+            save_json(f, names)
+    return set(names)
+
+
+def mark_owned(name):
+    save_json(REGISTRY / "owned.json", sorted(owned_names() | {name}))
+
+
+def owned_skills():
+    owned = owned_names()
+    return [d for d in manifest_skills() if d.name in owned]
 
 
 def load_json(p, default):
@@ -239,11 +266,9 @@ def chk_repos(deps, state):
             f'r{j}: repository(owner: {json.dumps(n.split("/")[0])}, name: {json.dumps(n.split("/")[1])}) '
             f'{{ nameWithOwner isArchived stargazerCount latestRelease {{ tagName url }} '
             f'defaultBranchRef {{ target {{ ... on Commit {{ oid committedDate }} }} }} }}' for j, n in enumerate(chunk)) + " }"
-        _, so, se = run(["gh", "api", "graphql", "-f", f"query={q}"])
-        try:
-            data = json.loads(so).get("data") or {}
-        except json.JSONDecodeError:
-            out.append(result("repos", "WARN", f"GraphQL failed: {se.strip()[:120]}"))
+        data, err = gql(q)
+        if err:
+            out.append(result("repos", "WARN", f"GraphQL failed, these repos were not checked this run: {err[:120]}"))
             continue
         for j, n in enumerate(chunk):
             d = next(x for x in deps if x["repo"] == n)
@@ -325,6 +350,11 @@ def chk_repos(deps, state):
     return out, new_state
 
 
+def transient(status):
+    """A server outage or rate limit says nothing about the endpoint moving (lesson L-2026-11-02-8)."""
+    return status == 429 or status >= 500
+
+
 def chk_http(d, prev):
     cid = d.get("id") or f"http:{d['url'][:60]}"
     exp = d.get("expect", {})
@@ -332,6 +362,8 @@ def chk_http(d, prev):
         status, body = http(d["url"], d.get("body"), d.get("headers"))
     except Exception as e:
         return [result(cid, "WARN", f"unreachable: {type(e).__name__}: {str(e)[:80]}", "rerun; if it persists the endpoint moved")]
+    if status != exp.get("status", 200) and transient(status):
+        return [result(cid, "WARN", f"HTTP {status} from {d['url']}: the server is down or rate-limiting", "rerun later")]
     if status != exp.get("status", 200):
         return [result(cid, "FAIL", f"HTTP {status} (expected {exp.get('status', 200)}) from {d['url']}",
                        "the endpoint changed or moved: find the new one and edit the skill/scripts")]
@@ -392,6 +424,8 @@ def chk_doc(d, prev):
         status, body = http(d["url"], headers={"Accept": "text/html,text/plain,*/*"})
     except Exception as e:
         return [result(cid, "WARN", f"unreachable: {str(e)[:80]}")], prev
+    if transient(status):
+        return [result(cid, "WARN", f"HTTP {status}: the server is down or rate-limiting", "rerun later")], prev
     if status >= 400:
         return [result(cid, "FAIL", f"HTTP {status}: the doc page moved", "find its new URL; check what the skill summarised from it")], prev
     text = re.sub(r"(?is)<(script|style|nav|header|footer)[^>]*>.*?</\1>", " ", body)
@@ -432,7 +466,9 @@ def chk_command(d, skill_dir):
     """Only for skills you own: run their own self-test. Understands selftest-style JSON
     ({"results":[{"check","status","detail"}]}) or plain exit codes."""
     cid = d.get("id") or f"cmd:{d['run'][:40]}"
-    code, so, se = run(shlex.split(d["run"].replace("{skill}", str(skill_dir))), cwd=skill_dir, timeout=d.get("timeout", 300))
+    # substitute after splitting: shlex would eat Windows backslashes and split paths with spaces (lesson L-2026-11-02-3)
+    cmd = [tok.replace("{skill}", str(skill_dir)) for tok in shlex.split(d["run"])]
+    code, so, se = run(cmd, cwd=skill_dir, timeout=d.get("timeout", 300))
     try:
         res = json.loads(so)["results"]
     except Exception:
@@ -479,11 +515,19 @@ def skill_texts(skill_dir):
     return [(f.relative_to(skill_dir).as_posix(), f.read_text(encoding="utf-8", errors="replace").splitlines()) for f in files]
 
 
+def norm_text(s):
+    return re.sub(r"\s+", " ", re.sub(r"[*`]", "", s.lower()))
+
+
+def quote_where(quote, texts):
+    """file:line of a claim's quote; quote and text are normalised the same way (lesson L-2026-11-02-5)."""
+    q = norm_text(quote)
+    return next((f"{rel}:{i + 1}" for rel, lines in texts for i, ln in enumerate(lines) if q in norm_text(ln)), None)
+
+
 def chk_claim(c, texts, skill_dir):
     cid = f"claim:{c['id']}"
-    q = re.sub(r"\s+", " ", c["quote"].lower())
-    where = next((f"{rel}:{i + 1}" for rel, lines in texts for i, ln in enumerate(lines)
-                  if q in re.sub(r"\s+", " ", re.sub(r"[*`]", "", ln.lower()))), None)
+    where = quote_where(c["quote"], texts)
     if not where:  # the text was edited away: the claim is stale, whatever its check says
         return [result(cid, "WARN", f"quoted text no longer in the skill: “{c['quote']}”",
                        "the skill was edited: update the claim's quote (or delete the claim) in keeper.json")]
@@ -607,7 +651,18 @@ def commit_registry(msg):
 
 
 def cmd_check(args):
-    dirs = owned_skills() if args.all else [resolve_skill(s) for s in args.skills]
+    if args.all:
+        dirs = owned_skills()
+        foreign = [d.name for d in manifest_skills() if d.name not in owned_names()]
+        if foreign:
+            print(f"skipped, not marked as yours: {', '.join(foreign)} (their checks would run the commands in their "
+                  "keeper.json; if you wrote one, run `keeper.py own <name>`)")
+    else:
+        dirs = [resolve_skill(s) for s in args.skills]
+        for d in dirs:
+            if (d / "keeper.json").is_file() and d.name not in owned_names():
+                sys.exit(f"{d.name} is not marked as yours, and checking it runs the commands in its keeper.json. "
+                         f"If you wrote it: keeper.py own {d.name}")
     if not dirs:
         sys.exit("no skills with keeper.json found (run `keeper.py init <skill>` first)")
     needs_action = False
@@ -767,13 +822,21 @@ def existing_repos(names):
         chunk = uniq[i:i + 25]
         q = "{ " + " ".join(f'r{j}: repository(owner: {json.dumps(n.split("/")[0])}, name: {json.dumps(n.split("/")[1])}) {{ nameWithOwner }}'
                             for j, n in enumerate(chunk)) + " }"
-        _, so, _ = run(["gh", "api", "graphql", "-f", f"query={q}"])
-        try:
-            data = json.loads(so).get("data") or {}
-            real |= {chunk[j] for j in range(len(chunk)) if data.get(f"r{j}")}
-        except json.JSONDecodeError:
-            real |= set(chunk)
+        data, err = gql(q)
+        real |= set(chunk) if err else {chunk[j] for j in range(len(chunk)) if data.get(f"r{j}")}
     return real
+
+
+def gql(query):
+    """gh GraphQL -> (data, error). NOT_FOUND repos still come back as data; any other error (rate limit, token,
+    outage) means the batch was not checked, so callers must not read missing repos as deleted (lesson L-2026-11-02-4)."""
+    _, so, se = run(["gh", "api", "graphql", "-f", f"query={query}"])
+    try:
+        out = json.loads(so)
+    except json.JSONDecodeError:
+        return {}, (se or so).strip() or "no output"
+    fatal = [e.get("message", "") for e in out.get("errors") or [] if e.get("type") != "NOT_FOUND"]
+    return out.get("data") or {}, "; ".join(fatal)
 
 
 def norm_url(u):
@@ -781,7 +844,7 @@ def norm_url(u):
     return (p.netloc.lower() + p.path).rstrip("/")
 
 
-def coverage(man, ref):
+def coverage(man, ref, offline=False):
     """The safety net: references in the skill's text that keeper.json doesn't track. A manifest written
     at creation time falls behind the first time someone edits the skill; this catches that."""
     ign = man.get("ignore", [])
@@ -811,7 +874,7 @@ def coverage(man, ref):
                               'add an "http" / "mcp" / "doc" dep, or ignore it', loc))
     tracked_repos = {d["repo"].lower() for d in deps if d.get("type") == "github-repo"}
     candidates = [r for r in ref["repo"] if r.lower() not in tracked_repos and not ignored(r)]
-    for r in sorted(existing_repos(candidates)):
+    for r in ([] if offline else sorted(existing_repos(candidates))):  # telling real repos from prose needs the network
         out.append(result(f"gap:repo:{r}", "GAP", f"the text cites {r} but keeper.json doesn't watch it",
                           'add a "github-repo" dep with its role', ref["repo"][r]))
     for tool, (v, loc) in ref["version"].items():
@@ -909,6 +972,7 @@ def cmd_init(args):
         draft["priorArt"] = {"verdict": prior["verdict"], "file": "references/prior-art.md"}
     target = d / "keeper.draft.json"  # always a draft: the author curates, then renames
     save_json(target, draft)
+    mark_owned(d.name)  # running init on a skill is authoring it
     print(f"wrote {target}\n  {sum(x['type'] == 'cli' for x in deps)} CLIs, {sum(x['type'] == 'github-repo' for x in deps)} repos, "
           f"{sum(x['type'] in ('http', 'mcp') for x in deps)} endpoints, {sum(x['type'] == 'doc' for x in deps)} docs, {len(claims)} candidate claims")
     if prior:
@@ -917,6 +981,46 @@ def cmd_init(args):
     dropped = sorted((set(ref["repo"]) | set(roles)) - real)
     if dropped:
         print(f"  dropped {len(dropped)} 'owner/name' strings that aren't real repos: {', '.join(dropped[:8])}")
+
+
+# ------------------------------------------------------------------ own / lint ----------------
+
+def cmd_own(args):
+    d = resolve_skill(args.skill)
+    mark_owned(d.name)
+    print(f"{d.name} is marked as yours: `check` will run the commands in its keeper.json")
+
+
+def cmd_lint(args):
+    """Offline gate (CI): manifests and eval sets parse, every claim quote is still in the text, and the text
+    references nothing keeper.json misses. Runs no code from the skill and no network calls, so it is safe on
+    any skill (lesson L-2026-11-02-7)."""
+    dirs = [resolve_skill(s) for s in args.skills] if args.skills else manifest_skills()
+    total = 0
+    for d in dirs:
+        errs, man = [], None
+        try:
+            man = json.loads((d / "keeper.json").read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            errs.append("no keeper.json")
+        except json.JSONDecodeError as e:
+            errs.append(f"keeper.json: {e}")
+        for f in sorted((d / "evals").rglob("*.json")) if (d / "evals").is_dir() else []:
+            try:
+                json.loads(f.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as e:
+                errs.append(f"{f.relative_to(d).as_posix()}: {e}")
+        if man is not None:
+            texts = skill_texts(d)
+            errs += [f"claim {c['id']}: quote not in the text: {c['quote']!r}"
+                     for c in man.get("claims", []) if not quote_where(c["quote"], texts)]
+            errs += [f"{r['status']} {r['id']}: {r['detail']}" + (f" ({r['where']})" if r.get("where") else "")
+                     for r in coverage(man, extract(d)[0], offline=True)]
+        print(f"{d.name}: " + ("ok" if not errs else f"{len(errs)} problem(s)"))
+        for e in errs:
+            print(f"  - {e}")
+        total += len(errs)
+    sys.exit(1 if total else 0)
 
 
 # ------------------------------------------------------------------ list / status -------------
@@ -1022,6 +1126,10 @@ def main():
     a.add_argument("skill")
     a.add_argument("ids", nargs="*")
     a.add_argument("--note")
+    o = sub.add_parser("own", help="mark a skill as yours, so `check` runs the commands in its keeper.json")
+    o.add_argument("skill")
+    li = sub.add_parser("lint", help="offline: manifests parse, claim quotes present, nothing untracked (for CI)")
+    li.add_argument("skills", nargs="*")
     sub.add_parser("list")
     sub.add_parser("status")
     pd = sub.add_parser("prior-art-diff", help="compare references/prior-art.md with a freshly researched one")
@@ -1030,7 +1138,7 @@ def main():
     args = p.parse_args()
     if args.cmd == "check" and not (args.all or args.skills):
         p.error("give skill names or --all")
-    {"init": cmd_init, "check": cmd_check, "ack": cmd_ack, "list": cmd_list, "status": cmd_status,
+    {"init": cmd_init, "check": cmd_check, "ack": cmd_ack, "list": cmd_list, "status": cmd_status, "own": cmd_own, "lint": cmd_lint,
      "prior-art-diff": cmd_prior_art_diff}[args.cmd](args)
 
 
