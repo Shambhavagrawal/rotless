@@ -174,7 +174,7 @@ SLOW = [grepapp_schema, script_grepapp, script_srcsweep]
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--quick", action="store_true", help="skip grep.app and the 20-source sweep")
+    p.add_argument("--quick", action="store_true", help="skip grep.app and the 21-source sweep")
     p.add_argument("--json", action="store_true")
     args = p.parse_args()
 

@@ -289,9 +289,11 @@
       "url": "https://huggingface.co/api/papers/search?q=retrieval",
       "expect": {
         "jsonPaths": [
-          "[]"
+          "[].paper.id",
+          "[].paper.title"
         ]
-      }
+      },
+      "why": "srcsweep.py hf-papers reads paper.id and paper.title (paper.githubRepo is optional, so not required)"
     },
     {
       "type": "command",
