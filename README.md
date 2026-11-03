@@ -13,6 +13,8 @@
 
 <p align="center"><a href="https://github.com/Shambhavagrawal/rotless/actions/workflows/selftest.yml"><img src="https://github.com/Shambhavagrawal/rotless/actions/workflows/selftest.yml/badge.svg" alt="selftest"></a></p>
 
+**Install (Claude Code):** `/plugin marketplace add Shambhavagrawal/rotless`, then `/plugin install rotless@rotless`. Codex and other agents: [Install](#install).
+
 Agent skills rot. A skill says "`gh search code` allows 10 requests a minute", "call this endpoint", "use this flag". Then the CLI ships a new version, the API changes shape, a step stops working, and the skill keeps telling your agent things that are no longer true. Whatever you learn while using a skill, a fix or a faster way, is lost when the conversation ends.
 
 rotless is four [Agent Skills](https://agentskills.io) that deal with both, for the skills you write and keep using. For a one-off prompt, or a skill someone else maintains, it's more than you need.
