@@ -61,7 +61,9 @@ def main():
     ws = harness.make_workspace(a.skill_path, files_dir=files)
     before = snapshot(ws)
     try:
-        r = harness.run(a.agent, prompt, ws, a.timeout, allow_writes=a.allow_writes)
+        # isolate: leave out the user's own skills, so an installed copy of the skill under test can't
+        # answer in the baseline run; the with-skill copy sits in the workspace's project skills folder
+        r = harness.run(a.agent, prompt, ws, a.timeout, allow_writes=a.allow_writes, isolate=True)
         out = Path(a.out)
         outputs = out / "outputs"
         outputs.mkdir(parents=True, exist_ok=True)

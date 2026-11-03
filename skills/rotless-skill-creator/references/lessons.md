@@ -121,3 +121,9 @@ Kept by rotless-skill-refiner. Each lesson has a check that failed on the old sk
 - Change: Start: SKILL.md step 7 says trigger runs get no input files, so a query must not hand the agent something to open first; the creator's own query was rewritten to stand on its own (evals/trigger-eval.json)
 - Check: the creator's 20 trigger queries on Claude Code 2.1.316, 3 runs each: 19/20 before (the old query triggered 0 of 3), 20/20 after (the new one 3 of 3)
 - Why: the agent replied "I couldn't find your invoice-ocr SKILL.md" and asked for it before loading any skill; it had already planned to use this skill
+
+## L-2026-11-03-22: baseline test runs on Claude skip the user's own skills
+- From: n-20261103043810-b033 (failure) · verdict: fix
+- Change: Start: `run_case.py` passes `isolate=True` to `harness.run`, so Claude runs with `--setting-sources project` for both the baseline and the with-skill run (the with-skill copy sits in the workspace's project skills folder) (scripts/run_case.py)
+- Check: scripts/test_harness.py L-22 (red on snapshot r22-snap, green after)
+- Why: in a first behaviour test of repo-launch, the without-skill answers quoted the user's installed copy ("your own repo-launch skill rules out both"), so the baseline was not a baseline; the trigger runner already isolated, the case runner didn't

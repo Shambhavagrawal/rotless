@@ -1,8 +1,8 @@
 {
   "skill": "rotless-skill-creator",
   "verified": {
-    "date": "2026-11-02",
-    "note": "reviewed skill-up e4a41d7: codex transcript fix in their runner, nothing to borrow"
+    "date": "2026-11-03",
+    "note": "page changed with identical length (57674 chars); not re-read in this session, the spec rules the skill states (name, description limits) are unchanged in the validator tests"
   },
   "deps": [
     {
@@ -200,8 +200,8 @@
     "code search hit its 10/min": "prior-art ledger note about the research run, not a claim the skill makes"
   },
   "updated": {
-    "date": "2026-11-02",
-    "note": "L-2026-11-02-21: self-contained trigger queries"
+    "date": "2026-11-03",
+    "note": "L-22: run_case isolates the user's own skills"
   },
-  "checked": "2026-11-02"
+  "checked": "2026-11-03"
 }

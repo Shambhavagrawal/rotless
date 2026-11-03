@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `run_case.py` runs headless agents with the user's own skills left out, so an installed copy of the skill under test can't answer the baseline run; `test_harness.py` checks it.
 - `notes.py stats` says "no field notes yet" instead of printing nothing, which looked like a broken install.
 - rotless-skill-creator step 7: trigger queries must not hand the agent a file to open, since trigger runs get none; the creator's own trigger set now passes 20/20 on Claude Code.
 

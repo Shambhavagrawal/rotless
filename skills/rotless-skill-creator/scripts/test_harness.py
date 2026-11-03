@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lesson checks for rotless-skill-creator's scripts (lessons L-2026-11-02-2 to L-2026-11-02-20 in references/lessons.md).
+"""Lesson checks for rotless-skill-creator's scripts (lessons L-2026-11-02-2 to L-2026-11-03-22 in references/lessons.md).
 
   python scripts/test_harness.py [skill-dir]     # default: this skill; pass a snapshot to see it fail
 
@@ -251,6 +251,32 @@ fm20 = 'name: t' + NL + 'description: |' + NL + '  First paragraph.' + NL + NL +
 out20 = harness.set_frontmatter('---' + NL + fm20 + NL + '---' + NL + 'body' + NL, 'description', 'new')
 if 'Second paragraph' in out20 or 'license: MIT' not in out20 or 'description: "new"' not in out20:
     fails.append(f'L-20: set_frontmatter left part of a multi-paragraph description: {out20!r}')
+
+# L-22: run_case (baseline and with-skill runs) also leaves out the user's own skills, so an installed
+# copy of the skill under test can't answer in the "without skill" run
+seen22 = {}
+real_run22 = harness.run
+
+
+def fake_run22(agent, prompt, cwd, timeout=600, allow_writes=False, isolate=False):
+    seen22["isolate"] = isolate
+    return {"exit": 0, "stdout": "ok", "stderr": "", "seconds": 0.1}
+
+
+harness.run = fake_run22
+out22 = Path(tempfile.mkdtemp())
+argv22 = sys.argv
+sys.argv = ["run_case.py", "--agent", "claude", "--prompt", "hi", "--out", str(out22)]
+try:
+    run_case.main()
+except Exception as e:
+    fails.append(f"L-22: run_case.main raised {type(e).__name__}: {e}")
+finally:
+    sys.argv = argv22
+    harness.run = real_run22
+    shutil.rmtree(out22, ignore_errors=True)
+if seen22.get("isolate") is not True:
+    fails.append("L-22: run_case must call harness.run with isolate=True so the baseline can't see the user's installed skill")
 
 # L-19: trigger tests on Claude leave out the user's own skills, so an installed copy of the skill can't
 # answer in place of the test copy (it showed up as a missed trigger)
